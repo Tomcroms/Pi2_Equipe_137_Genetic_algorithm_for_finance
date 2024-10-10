@@ -67,16 +67,44 @@ Le **coefficient de distribution** `beta_q` est calculé pour chaque variable \(
 \end{cases}
 \]
 
-
-AVEC /...
-
-![Équation SBX](https://latex.codecogs.com/png.latex?\beta_q(u)%20=%20\begin{cases}%20(2u)^{\frac{1}{\eta_c+1}},%20&%20\text{si%20}%20u%20\leq%200.5,%20\\%20\left(\frac{1}{2(1-u)}\right)^{\frac{1}{\eta_c+1}},%20&%20\text{sinon}.%20\end{cases})
-
-
-
-EN markdown 
-
 βq(u) = - Si u <= 0.5: (2u)^(1 / (ηₐ + 1)) - Sinon: [1 / (2(1 - u))]^(1 / (ηₐ + 1))
+
+
+où `eta_c` est un paramètre appelé **indice de distribution**, qui contrôle la diversité des solutions. 
+
+- Si `eta_c` est grand, les enfants seront proches des parents.
+- Si `eta_c` est faible, les enfants auront plus de diversité et pourront s'éloigner davantage des parents.
+
+### 3. Génération des enfants
+
+Les enfants `C_1` et `C_2` sont calculés pour chaque variable \(i\) selon les formules suivantes :
+
+C_1^i = 0.5 * [(1 + beta_q) * x_i^1 + (1 - beta_q) * x_i^2] C_2^i = 0.5 * [(1 - beta_q) * x_i^1 + (1 + beta_q) * x_i^2]
+
+
+Ces formules combinent les valeurs des parents pour générer deux enfants avec des valeurs continues comprises entre celles des deux parents, tout en introduisant une certaine variation.
+
+### 4. Correction (si nécessaire)
+
+Si les variables doivent rester dans un certain intervalle (par exemple, `[x_min, x_max]`), une correction est effectuée pour garantir que les enfants respectent ces bornes.
+
+## Paramètres importants
+
+- **Indice de distribution `eta_c`** :
+  - Si `eta_c` est grand, les enfants seront très proches des parents (peu de diversité).
+  - Si `eta_c` est faible, les enfants auront plus de diversité et pourront s’éloigner davantage des parents.
+
+## Exemple
+
+Prenons un exemple simple avec `n = 3`. Si les parents sont :
+
+- Parent 1 : `P_1 = (1.0, 2.0, 3.0)`
+- Parent 2 : `P_2 = (1.5, 2.5, 3.5)`
+
+Et si l’indice de distribution `eta_c = 2`, nous calculons `beta_q` pour chaque variable, puis nous utilisons ces valeurs pour générer deux enfants `C_1` et `C_2` :
+
+C_1 = (C_1^1, C_1^2, C_1^3) C_2 = (C_2^1, C_2^2, C_2^3)
+
 
 
 ### Mutation Gaussienne
