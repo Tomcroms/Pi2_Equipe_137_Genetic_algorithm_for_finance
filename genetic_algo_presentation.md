@@ -68,6 +68,12 @@ Le **coefficient de distribution** `beta_q` est calculé pour chaque variable \(
 \]
 
 
+AVEC /...
+
+![Équation SBX](https://latex.codecogs.com/png.latex?\beta_q(u)%20=%20\begin{cases}%20(2u)^{\frac{1}{\eta_c+1}},%20&%20\text{si%20}%20u%20\leq%200.5,%20\\%20\left(\frac{1}{2(1-u)}\right)^{\frac{1}{\eta_c+1}},%20&%20\text{sinon}.%20\end{cases})
+
+
+
 EN markdown 
 
 βq(u) = - Si u <= 0.5: (2u)^(1 / (ηₐ + 1)) - Sinon: [1 / (2(1 - u))]^(1 / (ηₐ + 1))
