@@ -12,11 +12,31 @@ Nous avons choisi la **sélection par tournoi**, où un sous-ensemble d'individu
 
 En plus de la sélection par tournoi, nous avons utilisé un mécanisme d'**élitisme** où les meilleurs individus sont directement transférés à la génération suivante, garantissant ainsi que les solutions de qualité ne sont pas perdues d'une génération à l'autre.
 
+Description détaillé de la sélection par tournoi avec Elites:
+
+Conservation des meilleures solutions (élitisme) : En optimisation de portefeuille, certaines allocations peuvent offrir des compromis très avantageux entre risque et rendement. Grâce à l'élitisme, ces portefeuilles optimaux ne risquent pas d'être perdus par des mécanismes aléatoires de reproduction ou de mutation. Cela garantit que les meilleurs portefeuilles identifiés jusque-là sont toujours disponibles pour des améliorations supplémentaires dans les générations futures.
+
+Pression sélective contrôlée (sélection par tournoi) : La sélection par tournoi permet de contrôler la pression sélective en ajustant la taille du tournoi. Avec un petit tournoi, les individus moins performants ont encore une chance de se reproduire, ce qui maintient une diversité génétique importante. Dans l’optimisation de portefeuille, cela favorise l’exploration de nouvelles combinaisons de poids d’actifs, ce qui peut mener à des solutions innovantes. Avec un tournoi plus grand, la pression sélective augmente, favorisant l’exploitation des meilleures solutions déjà identifiées.
+
+Équilibre entre exploration et exploitation : L'optimisation de portefeuille nécessite un bon équilibre entre exploration (découverte de nouvelles solutions) et exploitation (amélioration des solutions existantes). La sélection par tournoi avec élites permet ce compromis : d’un côté, l’élitisme garantit que les meilleures solutions sont conservées, favorisant l'exploitation, tandis que la sélection par tournoi permet de maintenir une diversité de solutions, stimulant l'exploration.
+
+Résistance au bruit des marchés financiers : Dans l'optimisation de portefeuille, les petites variations des données de marché (par exemple, les rendements futurs des actifs) peuvent rendre le problème volatile. La sélection par tournoi avec élites introduit une robustesse en conservant les meilleures solutions sur plusieurs générations, tout en introduisant une diversité contrôlée qui peut réagir aux changements du marché.
+
+Comparaison avec d’autres méthodes de sélection :
+Roulette Wheel Selection (sélection proportionnelle) : Cette méthode sélectionne les individus en fonction de la proportion de leur fitness par rapport à la population. Cependant, elle peut favoriser les solutions de manière disproportionnée, menant à une perte de diversité trop rapide. Dans l'optimisation de portefeuille, cela pourrait entraîner une convergence prématurée vers des solutions sous-optimales.
+
+Random Selection (sélection aléatoire) : Elle maintient une bonne diversité, mais le processus étant complètement aléatoire, les meilleures solutions peuvent être facilement perdues. Cela n'est pas souhaitable dans un contexte d'optimisation de portefeuille, où il est crucial de conserver les allocations les plus prometteuses.
+
+Rank Selection (sélection par rang) : Cette méthode sélectionne les individus en fonction de leur rang dans la population plutôt que directement en fonction de leur fitness. Elle est moins sensible aux écarts de fitness entre individus, mais manque de pression sélective directe comparée à la sélection par tournoi, où les meilleurs individus sont activement mis en compétition.
+
+Conclusion :
+La sélection par tournoi avec élites est un compromis intelligent pour l'optimisation de portefeuille, car elle combine la robustesse de la sélection des meilleures solutions (grâce à l'élitisme) avec la flexibilité nécessaire pour maintenir une diversité génétique contrôlée (grâce au tournoi). Ce mécanisme permet une convergence progressive et stable vers des portefeuilles optimaux, tout en explorant efficacement l'espace des solutions.
+
 ### Simulated Binary Crossover (SBX)
 
 Le **Simulated Binary Crossover (SBX)** a été choisi pour la recombinaison des portefeuilles. Contrairement aux méthodes de croisement classiques (comme le crossover à un ou deux points), SBX permet une meilleure exploration des solutions continues. SBX génère des enfants qui sont proches des parents dans l'espace des solutions, tout en introduisant de la variabilité.
 
-Le **Simulated Binary Crossover (SBX)** est une méthode de croisement utilisée dans les algorithmes génétiques pour les problèmes d’**optimisation continue**. Il génère des solutions enfants proches des parents tout en introduisant de la variabilité. SBX est contrôlé par un paramètre clé, \(\eta_{\text{SBX}}\), qui détermine la distance des enfants par rapport aux parents dans l’espace de recherche.
+Le **Simulated Binary Crossover (SBX)** est une méthode de croisement utilisée dans les algorithmes génétiques pour les problèmes d’**optimisation continue**. Il génère des solutions enfants proches des parents tout en introduisant de la variabilité. SBX est contrôlé par un paramètre clé, \(\eta_{\text{SBX}}\), qui détermine la distance des enfants par rapport aux parents dans l’espace de recherche, appelé le paramètre de distribution.
 
 - **Faible \(\eta\) (2-5)** : Favorise l’**exploration globale** en générant des enfants plus éloignés des parents, ce qui est utile en début d’optimisation ou lorsque l’espace de recherche est vaste.
 
@@ -26,6 +46,46 @@ Le **Simulated Binary Crossover (SBX)** est une méthode de croisement utilisée
 
 Le choix de \(\eta\) dépend de la phase de l’algorithme, de la **taille de la population** et de la **complexité du problème**. Dans l'optimisation de portefeuille, où les variables sont des proportions continues des actifs, un faible \(\eta\) favorise l’exploration initiale de différentes allocations, tandis qu’un \(\eta\) plus élevé permet de peaufiner les solutions en fin d’optimisation.
 
+## Étapes du SBX
+
+1. **Sélection des parents** :
+   - On sélectionne deux parents \( P_1 \) et \( P_2 \), avec des gènes sous forme de variables continues :
+     \[
+     P_1 = (x_1), \quad P_2 = (x_2)
+     \]
+     où \( x_1 \) et \( x_2 \) sont des réels (valeurs continues des variables).
+
+2. **Calcul de la distance entre les parents** :
+   On évalue la différence entre les valeurs des parents \( P_1 \) et \( P_2 \), ce qui influencera la position des enfants.
+
+3. **Calcul du coefficient de distribution (\( \beta \))** :
+   Le SBX utilise un paramètre appelé **coefficient de distribution** \( \beta \) pour contrôler la variation entre les enfants. La formule pour \( \beta_q \) est :
+   \[
+   \beta_q = \left( 1 + \frac{2|x_1 - x_2|}{|x_1 + x_2|} \right)^{-\eta_c}
+   \]
+   où \( \eta_c \) est l'indice de distribution qui contrôle la dispersion des enfants autour des parents.
+
+4. **Génération des enfants** :
+   Les enfants \( C_1 \) et \( C_2 \) sont générés à l’aide de la formule suivante :
+   \[
+   C_1 = 0.5 \times ((1 + \beta_q) \times P_1 + (1 - \beta_q) \times P_2)
+   \]
+   \[
+   C_2 = 0.5 \times ((1 - \beta_q) \times P_1 + (1 + \beta_q) \times P_2)
+   \]
+   Cette opération combine les valeurs des parents pour créer les enfants tout en introduisant de la diversité.
+
+5. **Correction (si nécessaire)** :
+   Si des bornes sont imposées sur les valeurs des variables, une correction peut être appliquée pour s’assurer que les enfants respectent ces limites.
+
+## Paramètres clés
+
+- **\( \eta_c \)** : L'indice de distribution qui contrôle la diversité des enfants. Plus \( \eta_c \) est grand, plus les enfants sont proches des parents. Une petite valeur de \( \eta_c \) produit des enfants plus diversifiés.
+
+## Exemple :
+
+Soient deux parents \( P_1 = 1.5 \) et \( P_2 = 2.5 \), avec \( \eta_c = 2 \). Le coefficient \( \beta_q \) est calculé, et les enfants \( C_1 \) et \( C_2 \) sont obtenus par la combinaison des valeurs des parents.
+
 
 
 ### Mutation Gaussienne
@@ -33,6 +93,25 @@ Le choix de \(\eta\) dépend de la phase de l’algorithme, de la **taille de la
 Pour maintenir la diversité dans la population, nous avons utilisé une **mutation gaussienne**. Chaque poids du portefeuille est modifié par une petite valeur aléatoire tirée d'une distribution normale. Cette méthode permet de faire varier les poids de manière contrôlée et subtile, ce qui est particulièrement adapté aux problèmes d'optimisation continue comme celui des portefeuilles d'actions.
 
 Après la mutation, les poids sont **normalisés** pour que la somme soit toujours égale à 1, respectant ainsi les contraintes du portefeuille.
+
+Pourquoi avoir choisi la mutation gaussienne (et pas un autre type de mutation) ?
+
+1. Adaptation aux problèmes d'optimisation continue :
+La mutation gaussienne consiste à ajouter une petite perturbation aléatoire à chaque poids du portefeuille, tirée d'une distribution normale centrée sur 0. Cette méthode permet d'explorer des variations subtiles autour des solutions actuelles, ce qui est particulièrement utile dans un problème d'optimisation continue comme celui d'un portefeuille d'actions, où les variables (les poids des actifs) sont des nombres réels.
+
+Modifications contrôlées : La distribution normale produit souvent des petites perturbations (grâce à la concentration de la distribution autour de la moyenne), ce qui permet de raffiner progressivement les solutions sans perturber fortement les bonnes configurations de poids. Cela est important dans l'optimisation de portefeuille, où de petits changements dans les proportions des actifs peuvent avoir un effet significatif sur la performance globale (rendement et risque).
+2. Maintien de la diversité :
+La mutation gaussienne introduit de la diversité dans la population en créant des variations dans les poids du portefeuille. Cette diversité est cruciale pour éviter la convergence prématurée de l'algorithme vers un optimum local, ce qui est souvent un problème dans l'optimisation de portefeuille, où il existe de nombreuses configurations locales attrayantes en termes de risque et rendement.
+
+3. Normalisation après mutation :
+Dans l'optimisation de portefeuille, la somme des poids doit être égale à 1 (une contrainte de normalisation). Après la mutation, les poids sont donc normalisés, ce qui garantit que l’allocation respecte toujours les contraintes du portefeuille. Cela fait de la mutation gaussienne un choix approprié, car elle permet d'introduire des variations sans violer les contraintes fondamentales du problème.
+
+4. Sensibilité au bruit des marchés :
+Les marchés financiers sont souvent soumis à des fluctuations aléatoires, et une mutation gaussienne reflète cette réalité, introduisant des ajustements progressifs dans les poids du portefeuille. Elle permet à l'algorithme de s'adapter à de légers changements, comme ceux observés dans les données financières, tout en explorant des solutions proches de l'optimum.
+
+Pourquoi cela pourrait ne pas être optimal :
+Perturbations faibles : Si la distribution normale est trop concentrée autour de 0 (variance faible), les perturbations apportées par la mutation peuvent être trop petites pour échapper aux optima locaux, limitant l'exploration globale.
+Adaptation lente : Si les marchés ou les objectifs changent rapidement, des perturbations trop faibles peuvent entraîner une adaptation trop lente du portefeuille, et l'algorithme pourrait avoir du mal à explorer de nouvelles régions de l’espace de solutions de manière significative.
 
 ## Autres Méthodes Alternatives
 
@@ -61,8 +140,30 @@ Voici quelques alternatives que nous aurions pu utiliser à différents stades d
 
 ### Mutation
 
-- **Mutation uniforme** : Chaque poids peut être remplacé par une nouvelle valeur choisie de manière aléatoire dans l'espace de solution.
-- **Mutation non uniforme** : La probabilité de mutation diminue au fur et à mesure que l'algorithme progresse, favorisant une exploration large au début, suivie d'une exploitation plus fine des solutions prometteuses.
+**Mutation uniforme** :
+
+Principe : La mutation uniforme consiste à remplacer un poids par une valeur aléatoire choisie uniformément dans un intervalle prédéfini (par exemple, entre 0 et 1).
+Avantages : Elle peut générer des solutions plus éloignées, offrant une meilleure exploration globale.
+Inconvénients : Les perturbations peuvent être trop grandes et drastiques, entraînant des modifications non contrôlées qui pourraient perturber une solution déjà bonne. Cela pourrait rendre difficile la stabilisation des solutions autour d’un optimum local.
+
+**Mutation par "flip bit"** :
+
+Principe : Similaire à une mutation binaire, cette méthode inverse les valeurs ou modifie un poids en le remplaçant par une valeur fixe (ou un seuil prédéfini).
+Avantages : Elle est simple et peut être efficace pour explorer rapidement de nouvelles solutions.
+Inconvénients : Ce type de mutation est plus adapté aux problèmes discrets et n’est généralement pas efficace pour des problèmes continus comme l'optimisation de portefeuille.
+
+**Mutation non uniforme** :
+
+Principe : Introduit des perturbations qui dépendent du nombre de générations écoulées. Plus l’algorithme avance, plus les mutations deviennent petites, favorisant une convergence fine à la fin.
+Avantages : Permet un meilleur contrôle de l’exploration au début et de l’exploitation à la fin, s’adaptant à l’évolution de l’algorithme.
+Inconvénients : Peut être plus complexe à paramétrer et pourrait encore conduire à une exploration limitée si mal utilisé.
+
+**Mutation Lévy flight** :
+
+Principe : Cette méthode utilise une distribution de Lévy (une distribution à longue traîne) pour générer des mutations. Cela permet à la mutation de générer des petites perturbations la plupart du temps, mais occasionnellement de faire des perturbations très larges.
+Avantages : Elle permet à l’algorithme de sortir de manière plus agressive des optima locaux en introduisant des perturbations importantes, tout en maintenant des ajustements plus subtils la plupart du temps.
+Inconvénients : Peut introduire trop d'instabilité si les perturbations sont trop fréquentes ou trop grandes.
+
 
 ## Fonction d'Utilité Quadratique
 
