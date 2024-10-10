@@ -16,24 +16,16 @@ En plus de la sélection par tournoi, nous avons utilisé un mécanisme d'**éli
 
 Le **Simulated Binary Crossover (SBX)** a été choisi pour la recombinaison des portefeuilles. Contrairement aux méthodes de croisement classiques (comme le crossover à un ou deux points), SBX permet une meilleure exploration des solutions continues. SBX génère des enfants qui sont proches des parents dans l'espace des solutions, tout en introduisant de la variabilité.
 
-\documentclass{article}
-\usepackage{amsmath}
+Le **Simulated Binary Crossover (SBX)** est une méthode de croisement utilisée dans les algorithmes génétiques pour les problèmes d’**optimisation continue**. Il génère des solutions enfants proches des parents tout en introduisant de la variabilité. SBX est contrôlé par un paramètre clé, \(\eta_{\text{SBX}}\), qui détermine la distance des enfants par rapport aux parents dans l’espace de recherche.
 
-\begin{document}
+- **Faible \(\eta\) (2-5)** : Favorise l’**exploration globale** en générant des enfants plus éloignés des parents, ce qui est utile en début d’optimisation ou lorsque l’espace de recherche est vaste.
 
-Le \textbf{Simulated Binary Crossover (SBX)} est une méthode de croisement utilisée dans les algorithmes génétiques pour les problèmes d’\textbf{optimisation continue}. Il génère des solutions enfants proches des parents tout en introduisant de la variabilité. SBX est contrôlé par un paramètre clé, \(\eta_{\text{SBX}}\), qui détermine la distance des enfants par rapport aux parents dans l’espace de recherche.
+- **Valeur modérée de \(\eta\) (5-15)** : Permet un **équilibre** entre exploration et exploitation, adapté aux phases intermédiaires de l'algorithme.
 
-\begin{itemize}
-    \item \textbf{Faible \(\eta\) (2-5)} : Favorise l’\textbf{exploration globale} en générant des enfants plus éloignés des parents, ce qui est utile en début d’optimisation ou lorsque l’espace de recherche est vaste.
-    
-    \item \textbf{Valeur modérée de \(\eta\) (5-15)} : Permet un \textbf{équilibre} entre exploration et exploitation, adapté aux phases intermédiaires de l'algorithme.
-    
-    \item \textbf{Grand \(\eta\) (15-25)} : Favorise l’\textbf{exploitation locale} en générant des enfants très proches des parents, idéal pour raffiner les solutions lors des phases finales.
-\end{itemize}
+- **Grand \(\eta\) (15-25)** : Favorise l’**exploitation locale** en générant des enfants très proches des parents, idéal pour raffiner les solutions lors des phases finales.
 
-Le choix de \(\eta\) dépend de la phase de l’algorithme, de la \textbf{taille de la population} et de la \textbf{complexité du problème}. Dans l'optimisation de portefeuille, où les variables sont des proportions continues des actifs, un faible \(\eta\) favorise l’exploration initiale de différentes allocations, tandis qu’un \(\eta\) plus élevé permet de peaufiner les solutions en fin d’optimisation.
+Le choix de \(\eta\) dépend de la phase de l’algorithme, de la **taille de la population** et de la **complexité du problème**. Dans l'optimisation de portefeuille, où les variables sont des proportions continues des actifs, un faible \(\eta\) favorise l’exploration initiale de différentes allocations, tandis qu’un \(\eta\) plus élevé permet de peaufiner les solutions en fin d’optimisation.
 
-\end{document}
 
 
 ### Mutation Gaussienne
