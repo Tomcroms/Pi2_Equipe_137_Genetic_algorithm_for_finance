@@ -48,43 +48,48 @@ Le choix de \(\eta\) dépend de la phase de l’algorithme, de la **taille de la
 
 ## Étapes du SBX
 
-1. **Sélection des parents** :
-   - On sélectionne deux parents \( P_1 \) et \( P_2 \), avec des gènes sous forme de variables continues :
-     \[
-     P_1 = (x_1), \quad P_2 = (x_2)
-     \]
-     où \( x_1 \) et \( x_2 \) sont des réels (valeurs continues des variables).
+### 1. Sélection des parents
 
-2. **Calcul de la distance entre les parents** :
-   On évalue la différence entre les valeurs des parents \( P_1 \) et \( P_2 \), ce qui influencera la position des enfants.
+On sélectionne deux parents \( P_1 \) et \( P_2 \), représentés par des vecteurs de \(n\) variables continues :
+\[
+P_1 = (x_1^1, x_2^1, \dots, x_n^1)
+\]
+\[
+P_2 = (x_1^2, x_2^2, \dots, x_n^2)
+\]
 
-3. **Calcul du coefficient de distribution (\( \beta \))** :
-   Le SBX utilise un paramètre appelé **coefficient de distribution** \( \beta \) pour contrôler la variation entre les enfants. La formule pour \( \beta_q \) est :
-   \[
-   \beta_q = \left( 1 + \frac{2|x_1 - x_2|}{|x_1 + x_2|} \right)^{-\eta_c}
-   \]
-   où \( \eta_c \) est l'indice de distribution qui contrôle la dispersion des enfants autour des parents.
+### 2. Calcul du coefficient de distribution \( \beta \)
 
-4. **Génération des enfants** :
-   Les enfants \( C_1 \) et \( C_2 \) sont générés à l’aide de la formule suivante :
-   \[
-   C_1 = 0.5 \times ((1 + \beta_q) \times P_1 + (1 - \beta_q) \times P_2)
-   \]
-   \[
-   C_2 = 0.5 \times ((1 - \beta_q) \times P_1 + (1 + \beta_q) \times P_2)
-   \]
-   Cette opération combine les valeurs des parents pour créer les enfants tout en introduisant de la diversité.
+Le **coefficient de distribution** \( \beta_q \) est calculé pour chaque variable \( x_i \) (avec \( i = 1, 2, \dots, n \)). Il permet de contrôler la dispersion des enfants autour des parents. La formule est donnée par :
+\[
+\beta_q = \left( 1 + \frac{2|x_i^1 - x_i^2|}{|x_i^1 + x_i^2|} \right)^{-\eta_c}
+\]
+où \( \eta_c \) est un paramètre appelé **indice de distribution**, qui contrôle la diversité des solutions. Un \( \eta_c \) élevé concentre les enfants autour des parents, tandis qu'une valeur basse favorise la diversité.
 
-5. **Correction (si nécessaire)** :
-   Si des bornes sont imposées sur les valeurs des variables, une correction peut être appliquée pour s’assurer que les enfants respectent ces limites.
+### 3. Génération des enfants
 
-## Paramètres clés
+Les enfants \( C_1 \) et \( C_2 \) sont calculés pour chaque variable \( i \) de manière suivante :
+\[
+C_1^i = 0.5 \times \left( (1 + \beta_q) \times x_i^1 + (1 - \beta_q) \times x_i^2 \right)
+\]
+\[
+C_2^i = 0.5 \times \left( (1 - \beta_q) \times x_i^1 + (1 + \beta_q) \times x_i^2 \right)
+\]
+Cette combinaison permet d’obtenir deux enfants avec des valeurs continues comprises entre celles des deux parents, tout en introduisant une certaine variation.
 
-- **\( \eta_c \)** : L'indice de distribution qui contrôle la diversité des enfants. Plus \( \eta_c \) est grand, plus les enfants sont proches des parents. Une petite valeur de \( \eta_c \) produit des enfants plus diversifiés.
+### 4. Correction (si nécessaire)
 
-## Exemple :
+Si les variables doivent rester dans un certain intervalle (par exemple, \( [x_{\text{min}}, x_{\text{max}}] \)), une correction est effectuée pour garantir que les enfants respectent ces bornes.
 
-Soient deux parents \( P_1 = 1.5 \) et \( P_2 = 2.5 \), avec \( \eta_c = 2 \). Le coefficient \( \beta_q \) est calculé, et les enfants \( C_1 \) et \( C_2 \) sont obtenus par la combinaison des valeurs des parents.
+## Paramètres importants
+
+- **\( \eta_c \)** : L’indice de distribution. Il contrôle la concentration des enfants autour des parents.
+  - Si \( \eta_c \) est grand, les enfants seront proches des parents.
+  - Si \( \eta_c \) est faible, les enfants auront plus de diversité et pourront être plus éloignés des parents.
+
+## Exemple
+
+Pour \( n = 3 \), avec des parents \( P_1 = (1.0, 2.0, 3.0) \) et \( P_2 = (1.5, 2.5, 3.5) \), et un \( \eta_c = 2 \), on calcule \( \beta_q \) pour chaque variable, puis on combine ces valeurs pour générer deux enfants \( C_1 \) et \( C_2 \).
 
 
 
