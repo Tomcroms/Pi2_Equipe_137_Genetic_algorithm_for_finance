@@ -50,47 +50,27 @@ Le choix de \(\eta\) dépend de la phase de l’algorithme, de la **taille de la
 
 ### 1. Sélection des parents
 
-On sélectionne deux parents \( P_1 \) et \( P_2 \), représentés par des vecteurs de \(n\) variables continues :
+On sélectionne deux parents \( P_1 \) et \( P_2 \), représentés par des vecteurs de `n` variables continues :
+
+- Parent 1 : `P_1 = (x_1^1, x_2^1, ..., x_n^1)`
+- Parent 2 : `P_2 = (x_1^2, x_2^2, ..., x_n^2)`
+
+### 2. Calcul du coefficient de distribution `beta_q`
+
+Le **coefficient de distribution** `beta_q` est calculé pour chaque variable \(x_i\) (avec \(i = 1, 2, ..., n\)). Il permet de contrôler la dispersion des enfants autour des parents. La formule est donnée par :
+
 \[
-P_1 = (x_1^1, x_2^1, \dots, x_n^1)
+\beta_q(u) = 
+\begin{cases} 
+(2u)^{\frac{1}{\eta_c+1}}, & \text{si } u \leq 0.5, \\
+\left(\frac{1}{2(1-u)}\right)^{\frac{1}{\eta_c+1}}, & \text{sinon}.
+\end{cases}
 \]
-\[
-P_2 = (x_1^2, x_2^2, \dots, x_n^2)
-\]
 
-### 2. Calcul du coefficient de distribution \( \beta \)
 
-Le **coefficient de distribution** \( \beta_q \) est calculé pour chaque variable \( x_i \) (avec \( i = 1, 2, \dots, n \)). Il permet de contrôler la dispersion des enfants autour des parents. La formule est donnée par :
-\[
-\beta_q = \left( 1 + \frac{2|x_i^1 - x_i^2|}{|x_i^1 + x_i^2|} \right)^{-\eta_c}
-\]
-où \( \eta_c \) est un paramètre appelé **indice de distribution**, qui contrôle la diversité des solutions. Un \( \eta_c \) élevé concentre les enfants autour des parents, tandis qu'une valeur basse favorise la diversité.
+EN markdown 
 
-### 3. Génération des enfants
-
-Les enfants \( C_1 \) et \( C_2 \) sont calculés pour chaque variable \( i \) de manière suivante :
-\[
-C_1^i = 0.5 \times \left( (1 + \beta_q) \times x_i^1 + (1 - \beta_q) \times x_i^2 \right)
-\]
-\[
-C_2^i = 0.5 \times \left( (1 - \beta_q) \times x_i^1 + (1 + \beta_q) \times x_i^2 \right)
-\]
-Cette combinaison permet d’obtenir deux enfants avec des valeurs continues comprises entre celles des deux parents, tout en introduisant une certaine variation.
-
-### 4. Correction (si nécessaire)
-
-Si les variables doivent rester dans un certain intervalle (par exemple, \( [x_{\text{min}}, x_{\text{max}}] \)), une correction est effectuée pour garantir que les enfants respectent ces bornes.
-
-## Paramètres importants
-
-- **\( \eta_c \)** : L’indice de distribution. Il contrôle la concentration des enfants autour des parents.
-  - Si \( \eta_c \) est grand, les enfants seront proches des parents.
-  - Si \( \eta_c \) est faible, les enfants auront plus de diversité et pourront être plus éloignés des parents.
-
-## Exemple
-
-Pour \( n = 3 \), avec des parents \( P_1 = (1.0, 2.0, 3.0) \) et \( P_2 = (1.5, 2.5, 3.5) \), et un \( \eta_c = 2 \), on calcule \( \beta_q \) pour chaque variable, puis on combine ces valeurs pour générer deux enfants \( C_1 \) et \( C_2 \).
-
+βq(u) = - Si u <= 0.5: (2u)^(1 / (ηₐ + 1)) - Sinon: [1 / (2(1 - u))]^(1 / (ηₐ + 1))
 
 
 ### Mutation Gaussienne
