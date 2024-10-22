@@ -1,0 +1,9 @@
+Code python algo génétique 
+
+    - Ajouter données réelles
+    - Utilisation de json -> comment ? pourquoi ? (par rapport à fichier xlsx)
+    - Utilisation de surcharge d'opérateur -> sinon les classes ne servent pas à grand chose
+    - pycodestyle nom_du_fichier.py -> afficher erreurs de syntaxes
+    - Bloc try / except 
+    - Utilisation de nombres d'actions plutôt que des %
+    - Cf photo pris la dernière fois.

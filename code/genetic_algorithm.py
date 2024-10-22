@@ -1,34 +1,6 @@
 import numpy as np
-import pandas as pd
-
-
-
-class Stock:
-    def __init__(self, name, expected_return, std_dev):
-        self.name = name
-        self.expected_return = expected_return  # Rendement attendu
-        self.std_dev = std_dev  # Écart-type du rendement
-
-
-class Portfolio:
-    def __init__(self, weights, stocks, cov_matrix):
-        self.weights = np.array(weights)  # Poids du portefeuille
-        self.stocks = stocks  # Liste des objets Stock
-        self.cov_matrix = cov_matrix  # Matrice de covariance
-        self.expected_return = self.calculate_expected_return()
-        self.variance = self.calculate_variance()
-        self.fitness = None  # À calculer avec la fonction d'utilité
-
-    def calculate_expected_return(self):
-        expected_returns = np.array([stock.expected_return for stock in self.stocks])
-        return np.dot(self.weights, expected_returns)
-
-    def calculate_variance(self):
-        return np.dot(self.weights.T, np.dot(self.cov_matrix, self.weights))
-
-    def calculate_fitness(self, risk_aversion):
-        # Fonction d'utilité quadratique
-        self.fitness = self.expected_return - (risk_aversion / 2) * self.variance
+from .stock import Stock
+from .portfolio import Portfolio
 
 
 class GeneticAlgorithm:
@@ -82,9 +54,10 @@ class GeneticAlgorithm:
         child.calculate_fitness(self.risk_aversion)
         return child
 
-    def gaussian_mutation(self, portfolio, mutation_rate=0.1, sigma=0.1):
+    def gaussian_mutation(self, portfolio: Portfolio, mutation_rate=0.1, sigma=0.1):
         # Mutation gaussienne
         mutated_weights = []
+        portfolio.__class__.__annotations__
         for weight in portfolio.weights:
             if np.random.rand() < mutation_rate:
                 weight += np.random.normal(0, sigma)
@@ -127,38 +100,5 @@ class GeneticAlgorithm:
         print(f"Arrêt à la génération {generation} avec un fitness de {best_fitness:.6f}")
         return best_portfolio
 
-# Données fictives pour illustrer
-stocks = [
-    Stock('Action A', 0.12, 0.20),
-    Stock('Action B', 0.10, 0.15),
-    Stock('Action C', 0.08, 0.10)
-]
-
-# Matrice de covariance fictive
-cov_matrix_values = np.array([
-    [0.04, 0.006, 0.004],
-    [0.006, 0.0225, 0.003],
-    [0.004, 0.003, 0.01]
-])
 
 
-
-
-################################################################
-population_size = 50
-risk_aversion = 4                   #A MODIFIER !!!
-fitness_threshold = 0.02 
-################################################################
-
-ga = GeneticAlgorithm(stocks, cov_matrix_values, population_size, risk_aversion=risk_aversion)
-best_portfolio = ga.evolve(fitness_threshold)
-
-
-
-
-print("Meilleur portefeuille trouvé:")
-for i, stock in enumerate(stocks):
-    print(f"{stock.name}: {best_portfolio.weights[i]:.4f}")
-print(f"Rendement attendu: {best_portfolio.expected_return:.4f}")
-print(f"Variance: {best_portfolio.variance:.6f}")
-print(f"Fitness: {best_portfolio.fitness:.6f}")
