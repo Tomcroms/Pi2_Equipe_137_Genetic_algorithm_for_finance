@@ -1,6 +1,6 @@
 import numpy as np
-from .stock import Stock
-from .portfolio import Portfolio
+from stock import Stock
+from portfolio import Portfolio
 
 
 class GeneticAlgorithm:
