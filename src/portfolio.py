@@ -29,9 +29,30 @@ class Portfolio:
         weights = investment / self.total_investment
         return np.dot(weights.T, np.dot(self.cov_matrix, weights)) * self.total_investment**2
 
-    def calculate_fitness(self, penalty=0):
-        # Quadratic utility function with optional investment penalty
-        self.fitness = self.expected_return - (self.risk_aversion / 2) * self.variance - penalty * self.total_investment
+    def calculate_fitness(self):
+        # Avoid division by zero
+        if self.total_investment == 0:
+            self.fitness = -np.inf  # Assign a very low fitness if there's no investment
+            return
+
+        # Calculate per-unit return and variance
+        return_per_unit = self.expected_return / self.total_investment
+        variance_per_unit = self.variance / (self.total_investment ** 2)
+
+        # Penalty for under-investment
+        investment_ratio = self.total_investment / self.budget
+        penalty = abs(1 - investment_ratio) * 1000  # Adjust the penalty factor as needed
+
+        # Fitness calculation
+        self.fitness = return_per_unit - (self.risk_aversion / 2) * variance_per_unit - penalty
+
+    def _adjust_shares_to_budget(self):
+        total_value = self.calculate_total_investment()
+        if total_value == 0:
+            return
+        scaling_factor = self.budget / total_value
+        self.shares *= scaling_factor
+        self.total_investment = self.calculate_total_investment()
 
     def __add__(self, other):
         # Simulated Binary Crossover (SBX)
@@ -45,13 +66,11 @@ class Portfolio:
                 beta = (1 / (2 * (1 - u))) ** (1 / (eta + 1))
             child_share = 0.5 * ((1 + beta) * self.shares[i] + (1 - beta) * other.shares[i])
             child_shares.append(child_share)
-        # Ensure non-negative and within budget
+        # Ensure non-negative shares
         child_shares = np.maximum(child_shares, 0)
+        # Re-scale shares to match the budget
         child_portfolio = Portfolio(child_shares, self.stocks, self.cov_matrix, self.budget, self.risk_aversion)
-        if child_portfolio.total_investment > self.budget:
-            scale_factor = self.budget / child_portfolio.total_investment
-            child_portfolio.shares *= scale_factor
-            child_portfolio.total_investment = self.budget
+        child_portfolio._adjust_shares_to_budget()
         child_portfolio.calculate_fitness()
         return child_portfolio
 
@@ -63,12 +82,22 @@ class Portfolio:
         for i in range(len(mutated_shares)):
             if np.random.rand() < mutation_rate:
                 mutated_shares[i] += np.random.normal(0, sigma * mutated_shares[i])
-        # Ensure non-negative and within budget
+        # Ensure non-negative shares
         mutated_shares = np.maximum(mutated_shares, 0)
+        # Re-scale shares to match the budget
         mutated_portfolio = Portfolio(mutated_shares, self.stocks, self.cov_matrix, self.budget, self.risk_aversion)
-        if mutated_portfolio.total_investment > self.budget:
-            scale_factor = self.budget / mutated_portfolio.total_investment
-            mutated_portfolio.shares *= scale_factor
-            mutated_portfolio.total_investment = self.budget
+        mutated_portfolio._adjust_shares_to_budget()
         mutated_portfolio.calculate_fitness()
         return mutated_portfolio
+
+    def get_expected_return_percentage(self):
+        if self.total_investment == 0:
+            return 0
+        return (self.expected_return / self.total_investment) * 100
+
+    def get_standard_deviation_percentage(self):
+        if self.total_investment == 0:
+            return 0
+        variance_of_returns = self.variance / (self.total_investment ** 2)
+        std_dev = np.sqrt(variance_of_returns)
+        return std_dev * 100
