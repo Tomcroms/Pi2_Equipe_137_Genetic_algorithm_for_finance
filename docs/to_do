@@ -1,9 +1,17 @@
-Code python algo génétique 
+Autres algo à tester potentiellement 
+
+    - dss mde (dynamic sto solution multimember differential evolution)
+
+
+Code python algo génétique 2
+
+
+    - Utilisation de nombres d'actions plutôt que des %
+    - Utilisation de surcharge d'opérateur -> sinon les classes ne servent pas à grand chose
+
 
     - Ajouter données réelles
     - Utilisation de json -> comment ? pourquoi ? (par rapport à fichier xlsx)
-    - Utilisation de surcharge d'opérateur -> sinon les classes ne servent pas à grand chose
     - pycodestyle nom_du_fichier.py -> afficher erreurs de syntaxes
-    - Blocs locaux, pas seulement globaux
-    - Utilisation de nombres d'actions plutôt que des %
-    - Cf photo pris la dernière fois.
+    - try except locaux, pas seulement globaux
+    - Cf photo pris la dernière fois
