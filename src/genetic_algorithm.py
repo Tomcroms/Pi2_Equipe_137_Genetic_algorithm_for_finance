@@ -5,11 +5,11 @@ from portfolio import Portfolio
 
 class GeneticAlgorithm:
     def __init__(self, stocks, cov_matrix, population_size, risk_aversion=4, budget=100000, max_generations=None):
-        self.stocks = stocks  # List of Stock objects
-        self.cov_matrix = cov_matrix  # Covariance matrix
-        self.population_size = population_size
+        self.stocks = stocks
+        self.cov_matrix = cov_matrix
+        self.population_size = population_size  #number of portfolio generated at each step
         self.risk_aversion = risk_aversion
-        self.budget = budget  # Total investment budget
+        self.budget = budget
         self.population = self.initialize_population()
         self.max_generations = max_generations
 
@@ -41,7 +41,7 @@ class GeneticAlgorithm:
             new_population = []
             # Elitism: retain the top individuals
             self.population.sort(key=lambda ind: ind.fitness, reverse=True)
-            elite = self.population[:int(0.1 * self.population_size)]
+            elite = self.population[:int(0.1 * self.population_size)]           #selection du top 10% des Portfolio de la population 
             new_population.extend(elite)
             while len(new_population) < self.population_size:
                 # Selection
