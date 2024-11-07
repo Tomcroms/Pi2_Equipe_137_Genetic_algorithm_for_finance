@@ -61,32 +61,32 @@ Après avoir sélectionnés les couples de parents, pour chaque couple on croise
 ETA (𝜂) est l'indice de distribution du croisement (𝜂 élevé réduit la dispersion des enfants)
 
 On boucle sur chaque actions : 
-    On génère un nombre aléatoire U entre 0 et 1.
-    La nouvelle part est calculée comme une moyenne pondérée des parts entre les 2 parents
+On génère un nombre aléatoire U entre 0 et 1.
+La nouvelle part est calculée comme une moyenne pondérée des parts entre les 2 parents.
 
-    Formule part_enfant
-    $child_share=0.5*((1+β)*self.shares[i]+(1-β)*other.shares[i])$
+Formule part_enfant
+child_share=0.5*((1+β)*self.shares[i]+(1-β)*other.shares[i])$
 
-    $(1+β)*parent1_share -> pondère la partie du premier parent
-    $(1-β)*parent2_share -> pondère la partie du 2e parent
+(1+β)*parent1_share -> pondère la partie du premier parent
+(1-β)*parent2_share -> pondère la partie du 2e parent
 
-    Donc, si β proche 1 on se rapproche du 1er parent, β proche de 0 du 2e et β proche de 0.5 contribution équilibré des 2 parents.
+Donc, si β proche 1 on se rapproche du 1er parent, β proche de 0 du 2e et β proche de 0.5 contribution équilibré des 2 parents.
 
-    La nouvelle part dépend donc du paramètre Beta calculé comme suit : 
-    Si u<=0.5 :
-    ![Image équation](img/Beta_u_inf.png)
-    Explication : 
-    On multiplie par 2u pour transformer l'intervalle [0, 0.5] en [0,1] -> normaliser u
-    Exponentiation par 1/(𝜂+1) -> contrôler la courbe de distribution
+La nouvelle part dépend donc du paramètre Beta calculé comme suit : 
+Si u<=0.5 :
+![Image équation](img/Beta_u_inf.png)
+Explication : 
+On multiplie par 2u pour transformer l'intervalle [0, 0.5] en [0,1] -> normaliser u
+Exponentiation par 1/(𝜂+1) -> contrôler la courbe de distribution
 
-    Si u>0.5 :
-    ![Image équation](img/Beta_u_sup.png)
-    Cette fois-ci on normalise de [0.5, 1] en [0, 1] avec 2(1-u)
+Si u>0.5 :
+![Image équation](img/Beta_u_sup.png)
+Cette fois-ci on normalise de [0.5, 1] en [0, 1] avec 2(1-u)
 
-    Exemple d'une application numérique
-    ![Image exemple numérique](img/exemple_beta_u.png)
+Exemple d'une application numérique
+![Image exemple numérique](img/exemple_beta_u.png)
 
-    Dans cet exemple, les valeurs de 𝛽 u=0.25 u=0.75 sont des inverses approximatifs l'une de l'autre, illustrant la symétrie autour de la moyenne. 
+Dans cet exemple, les valeurs de 𝛽 u=0.25 u=0.75 sont des inverses approximatifs l'une de l'autre, illustrant la symétrie autour de la moyenne. 
 
 
 ## 6. Mutation
