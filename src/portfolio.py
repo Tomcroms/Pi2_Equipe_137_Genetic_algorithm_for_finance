@@ -46,7 +46,7 @@ class Portfolio:
         # Fitness calculation
         self.fitness = return_per_unit - (self.risk_aversion / 2) * variance_per_unit - penalty
 
-    def _adjust_shares_to_budget(self):
+    def adjust_shares_to_budget(self):
         total_value = self.calculate_total_investment()
         if total_value == 0:
             return
@@ -70,7 +70,7 @@ class Portfolio:
         child_shares = np.maximum(child_shares, 0)
         # Re-scale shares to match the budget
         child_portfolio = Portfolio(child_shares, self.stocks, self.cov_matrix, self.budget, self.risk_aversion)
-        child_portfolio._adjust_shares_to_budget()
+        child_portfolio.adjust_shares_to_budget()
         child_portfolio.calculate_fitness()
         return child_portfolio
 
@@ -86,7 +86,7 @@ class Portfolio:
         mutated_shares = np.maximum(mutated_shares, 0)
         # Re-scale shares to match the budget
         mutated_portfolio = Portfolio(mutated_shares, self.stocks, self.cov_matrix, self.budget, self.risk_aversion)
-        mutated_portfolio._adjust_shares_to_budget()
+        mutated_portfolio.adjust_shares_to_budget()
         mutated_portfolio.calculate_fitness()
         return mutated_portfolio
 
