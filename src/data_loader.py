@@ -51,9 +51,45 @@ class DataLoader:
 
         # Calculate daily percentage change
         self.daily_returns = self.raw_data.pct_change().dropna()
-        print("Daily returns calculated.")
+        # print("Daily returns calculated.")
 
-    def calculate_statistics(self):
+    def calculate_statistics_with_geometric_average_returns(self):
+        """
+        Calculate expected returns, standard deviations, and the covariance matrix using geometric returns.
+        """
+        if self.daily_returns is None:
+            raise ValueError("Daily returns not calculated. Please run 'calculate_daily_returns()' first.")
+
+        # Annualization factor
+        trading_days = 252
+
+        # Number of periods (days)
+        num_periods = len(self.daily_returns)
+
+        # Calculate growth factors
+        growth_factors = self.daily_returns + 1
+
+        # Calculate cumulative growth
+        cumulative_growth = growth_factors.prod()
+
+        # Compute geometric mean daily return
+        geometric_mean_daily_returns = cumulative_growth ** (1 / num_periods) - 1
+
+        # Annualize the geometric mean daily return
+        self.expected_returns = (1 + geometric_mean_daily_returns) ** trading_days - 1
+
+        # Calculate log returns for standard deviation
+        log_returns = np.log(growth_factors)
+
+        # Calculate annualized standard deviations
+        self.std_devs = log_returns.std() * np.sqrt(trading_days)
+
+        # Calculate the covariance matrix
+        self.cov_matrix = log_returns.cov() * trading_days
+
+        print("Statistical calculations completed using geometric mean for expected returns.")
+
+    def calculate_statistics_with_arithmetic_average_returns(self):
         """
         Calculate expected returns, standard deviations, and the covariance matrix.
         """
@@ -107,7 +143,7 @@ class DataLoader:
         self.load_data()
         self.preprocess_data()
         self.calculate_daily_returns()
-        self.calculate_statistics()
+        self.calculate_statistics_with_geometric_average_returns()
         self.get_latest_prices()
         stocks = self.create_stock_objects()
         return stocks, self.cov_matrix

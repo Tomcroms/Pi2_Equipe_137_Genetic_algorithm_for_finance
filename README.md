@@ -6,7 +6,7 @@ L'algorithme permet d'équilibrer le rendement espéré du portefeuille et le ri
 
 ### Se référer à /docs/docs.md pour plus de détails sur les algorithmes génétiques
 
-# Implémentation de l'algorithme génétique TEAM 157
+# Implémentation de l'algorithme génétique TEAM 137
 
 Voici les différentes méthodes que nous avons choisis pour les différentes étapes de notre algorithme génétique.
 
@@ -65,7 +65,7 @@ On génère un nombre aléatoire U entre 0 et 1.
 La nouvelle part est calculée comme une moyenne pondérée des parts entre les 2 parents.
 
 Formule part_enfant
-child_share=0.5*((1+β)*self.shares[i]+(1-β)*other.shares[i])$
+child_share=0.5*((1+β)*self.shares[i]+(1-β)*other.shares[i])
 
 (1+β)*parent1_share -> pondère la partie du premier parent
 (1-β)*parent2_share -> pondère la partie du 2e parent
@@ -75,6 +75,7 @@ Donc, si β proche 1 on se rapproche du 1er parent, β proche de 0 du 2e et β p
 La nouvelle part dépend donc du paramètre Beta calculé comme suit : 
 Si u<=0.5 :
 ![Image équation](img/Beta_u_inf.png)
+
 Explication : 
 On multiplie par 2u pour transformer l'intervalle [0, 0.5] en [0,1] -> normaliser u
 Exponentiation par 1/(𝜂+1) -> contrôler la courbe de distribution

@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import json
 
+#style pour python --> pycodestyle ./chemin du fichier ex pycode
+
 
 d = json.load(open("chemin"))   #convertit json en dictionnaire python
 

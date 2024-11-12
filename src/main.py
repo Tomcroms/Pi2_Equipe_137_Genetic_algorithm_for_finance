@@ -17,8 +17,8 @@ def main():
         return
 
     try:
-        ga = GeneticAlgorithm(stocks, cov_matrix, population_size=50, risk_aversion=6, budget=1_000_000_000, max_generations=10000)
-        best_portfolio = ga.evolve(fitness_threshold=0.053)
+        ga = GeneticAlgorithm(stocks, cov_matrix, population_size=100, risk_aversion=6, budget=1_000_000_000, max_generations=1000)
+        best_portfolio = ga.evolve(fitness_threshold=0.030)
 
         print("Best portfolio:")
         for stock, shares in zip(best_portfolio.stocks, best_portfolio.shares):
