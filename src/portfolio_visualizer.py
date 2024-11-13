@@ -48,9 +48,8 @@ class PortfolioVisualizer:
             xdata.append(p['std_dev'])
             ydata.append(p['expected_return'])
 
-        # Debug: Print data to verify correctness
-        print("xdata:", xdata)
-        print("ydata:", ydata)
+        # print("xdata:", xdata)
+        # print("ydata:", ydata)
 
         # Update the scatter plot
         self.scatter.set_offsets(np.column_stack((xdata, ydata)))

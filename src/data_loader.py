@@ -143,7 +143,7 @@ class DataLoader:
         self.load_data()
         self.preprocess_data()
         self.calculate_daily_returns()
-        self.calculate_statistics_with_geometric_average_returns()
+        self.calculate_statistics_with_arithmetic_average_returns()
         self.get_latest_prices()
         stocks = self.create_stock_objects()
         return stocks, self.cov_matrix

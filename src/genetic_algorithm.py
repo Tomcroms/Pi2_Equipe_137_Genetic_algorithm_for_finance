@@ -31,7 +31,7 @@ class GeneticAlgorithm:
     def adjust_parameters(self):
         Portfolio.eta = max(0.5, Portfolio.eta * 0.9)                                       # Decrease eta, but not below 0.5
         Portfolio.mutation_rate = min(1, Portfolio.mutation_rate * 1.1)                     # Increase up to 100%
-        Portfolio.sigma = max(100, Portfolio.sigma * 1.1)                                             # Increase sigma
+        Portfolio.sigma = min(0.5, Portfolio.sigma * 1.1)                                             # Increase sigma
         print(f"New parameters: eta={Portfolio.eta}, mutation_rate={Portfolio.mutation_rate}, sigma={Portfolio.sigma}")
 
     def fitness_stagnation(self, generation, stagnation_limit=3):
@@ -83,7 +83,6 @@ class GeneticAlgorithm:
 
             visualizer.update(self.population)
 
-
             #Check for stagnation
             if(self.fitness_stagnation(generation)):
                 self.adjust_parameters()
@@ -94,4 +93,5 @@ class GeneticAlgorithm:
                 break
 
         print(f"Stopped at generation {generation} with a fitness of {best_fitness:.6f}")
+
         return best_portfolio
