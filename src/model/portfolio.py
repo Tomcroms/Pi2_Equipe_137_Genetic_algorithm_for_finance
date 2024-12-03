@@ -110,9 +110,9 @@ class Portfolio:
         variance_of_returns = self.variance / (self.total_investment ** 2)
         std_dev = np.sqrt(variance_of_returns)
         return std_dev * 100
-    
 
     #Static methods
+    @staticmethod
     def tournament_selection(population, k=3):
         selected = []
         for _ in range(2):  # Sélectionner deux parents
@@ -120,3 +120,21 @@ class Portfolio:
             best = max(individuals, key=lambda ind: ind.fitness)
             selected.append(best)
         return selected
+    
+    @staticmethod
+    def selection(population, selection_method):
+        if(selection_method==None):
+            return Portfolio.tournament_selection(population)
+        
+        elif(selection_method=="autre_methode"):
+            return "autre methode"
+        
+        else:
+            print("Unknown selection method...")
+            raise Exception
+        
+
+
+
+
+    

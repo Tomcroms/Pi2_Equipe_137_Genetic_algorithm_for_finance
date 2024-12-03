@@ -1,21 +1,24 @@
-# genetic_algorithm.py
 import numpy as np
-from stock import Stock
-from portfolio import Portfolio
-from portfolio_visualizer import PortfolioVisualizer
+from model.stock import Stock
+from model.portfolio import Portfolio
+from view.portfolio_visualizer import PortfolioVisualizer
+from view.fitness_visualization import FitnessVisualizer
 import time
 
 class GeneticAlgorithm:
-    def __init__(self, stocks, cov_matrix, population_size, risk_aversion=4, budget=10000000, max_generations=None):
+    def __init__(self, stocks, cov_matrix, population_size, selection_method="tournament_selection", risk_aversion=4, budget=10000000, max_generations=None):
         self.stocks = stocks
         self.cov_matrix = cov_matrix
         self.population_size = population_size  #number of portfolio generated at each step
         self.risk_aversion = risk_aversion
         self.budget = budget
         self.population = self.initialize_population()
+        self.selection_method = selection_method
         self.max_generations = max_generations
         self.stagnation_counter = 0
         self.best_fitness_history = []
+        self.portfolio_visualizer = PortfolioVisualizer()
+        self.fitness_visualizer = FitnessVisualizer()
 
     def initialize_population(self):
         population = []
@@ -49,12 +52,56 @@ class GeneticAlgorithm:
         
         return stagnation
 
+    def fitness_stagnation2(self, generation, threshold=0.001):
+        """
+        Check if the fitness function shows stagnation based on the derivative of the moving average.
+        """
+        window_size = 5
+        if len(self.best_fitness_history) < window_size:
+            return False
+
+        # Compute the moving average
+        moving_avg = np.convolve(
+            self.best_fitness_history, np.ones(window_size) / window_size, mode='valid'
+        )
+
+        # Compute the derivative of the moving average
+        if len(moving_avg) > 1:
+            derivative = np.diff(moving_avg)
+            print(f"Moving average derivative (last): {derivative[-1]:.6f}")
+
+            # Check if the last derivative is below the threshold
+            if derivative[-1] < threshold:
+                print("Fitness is stagnating based on moving average.")
+                return True
+
+        return False
+
+    def compute_global_progression(self):
+        """
+        Compute and print global progression metrics: cumulative improvement and mean rate.
+        """
+        if len(self.best_fitness_history) < 2:
+            print("Not enough data for global progression metrics.")
+            return
+
+        # Total progression
+        cumulative_progression = sum(
+            abs(self.best_fitness_history[i] - self.best_fitness_history[i - 1])
+            for i in range(1, len(self.best_fitness_history))
+        )
+
+        # Mean rate of progression
+        mean_progression_rate = cumulative_progression / len(self.best_fitness_history)
+
+        print("\n=== Global Progression Metrics ===")
+        print(f"Cumulative progression: {cumulative_progression:.6f}")
+        print(f"Mean progression rate: {mean_progression_rate:.6f}")
+        print("==================================")
+
     def evolve(self, fitness_threshold):
         generation = 0
         best_fitness = -np.inf
-
-        visualizer = PortfolioVisualizer()
-
 
         while best_fitness < fitness_threshold:
             generation += 1
@@ -65,8 +112,9 @@ class GeneticAlgorithm:
             new_population.extend(elite)
 
             while len(new_population) < self.population_size:
-                # Selection
-                parent1, parent2 = Portfolio.tournament_selection(self.population)
+                # Selection                
+                parent1, parent2 = Portfolio.selection(self.population, self.selection_method)
+                
                 # Crossover using overloaded '+' operator
                 child = parent1 + parent2
                 # Mutation using overloaded '~' operator
@@ -81,7 +129,8 @@ class GeneticAlgorithm:
             self.best_fitness_history.append(best_fitness)
             print(f"Generation {generation}: Best fitness = {best_fitness:.6f}")
 
-            visualizer.update(self.population)
+            self.portfolio_visualizer.update(self.population)
+            self.fitness_visualizer.update(best_portfolio, generation)
 
             #Check for stagnation
             if(self.fitness_stagnation(generation)):

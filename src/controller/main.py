@@ -1,7 +1,13 @@
-from stock import Stock
-from genetic_algorithm import GeneticAlgorithm
-import numpy as np
-from data_loader import DataLoader
+import sys
+import os
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(current_dir, '..'))
+sys.path.insert(0, project_root)
+
+
+from model.genetic_algorithm import GeneticAlgorithm
+from model.data_loader import DataLoader
 import time
 
 
@@ -17,7 +23,7 @@ def main():
         return
 
     try:
-        ga = GeneticAlgorithm(stocks, cov_matrix, population_size=100, risk_aversion=6, budget=1_000_000_000, max_generations=1000)
+        ga = GeneticAlgorithm(stocks, cov_matrix, population_size=100, selection_method=None, risk_aversion=6, budget=1_000_000_000, max_generations=1000)
         best_portfolio = ga.evolve(fitness_threshold=0.030)
 
         print("Best portfolio:")
@@ -28,33 +34,11 @@ def main():
         print(f"Variance: {best_portfolio.variance:.2f}")
         print(f"Standard Deviation of Returns: {best_portfolio.get_standard_deviation_percentage():.2f}%")
 
+        time.sleep(1000)
+
     except Exception as e:
         print(f"Erreur inconnue:\n{e}")
 
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-################################################################
-                        #Donnees test
-
-# stocks = [
-#     Stock('Stock A', expected_return=0.1, std_dev=0.2, price=50),
-#     Stock('Stock B', expected_return=0.15, std_dev=0.25, price=100),
-#     Stock('Stock C', expected_return=0.07, std_dev=0.15, price=30),
-# ]
-
-# # Covariance matrix (example)
-# cov_matrix = np.array([
-#     [0.04, 0.006, 0.002],
-#     [0.006, 0.0625, 0.0015],
-#     [0.002, 0.0015, 0.0225],
-# ])
-
-################################################################
