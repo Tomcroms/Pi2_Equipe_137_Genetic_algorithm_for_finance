@@ -6,10 +6,11 @@ from view.fitness_visualization import FitnessVisualizer
 import time
 
 class GeneticAlgorithm:
-    def __init__(self, stocks, cov_matrix, population_size, fitness_function=None, crossover_function=None, mutation_function=None, selection_method=None, risk_aversion=4, budget=10000000, max_generations=None):
+    def __init__(self, stocks, cov_matrix, population_size=100, is_short_available=False, fitness_function=None, crossover_function=None, mutation_function=None, selection_method=None, risk_aversion=4, budget=10000000, max_generations=None):
         self.stocks = stocks
         self.cov_matrix = cov_matrix
         self.population_size = population_size  #number of portfolio generated at each step
+        self.is_short_available = is_short_available
         self.fitness_function = fitness_function
         self.crossover_function = crossover_function
         self.mutation_function = mutation_function
@@ -30,7 +31,7 @@ class GeneticAlgorithm:
             # Generate random number of shares within the budget
             shares = np.random.rand(len(self.stocks)) * (self.budget / prices)
             shares = np.floor(shares)  # Use whole shares
-            portfolio = Portfolio(shares, self.stocks, self.cov_matrix, self.fitness_function, self.crossover_function, self.mutation_function, self.budget, self.risk_aversion)
+            portfolio = Portfolio(shares, self.stocks, self.cov_matrix, self.is_short_available, self.fitness_function, self.crossover_function, self.mutation_function, self.budget, self.risk_aversion)
             population.append(portfolio)
         return population
     
@@ -136,8 +137,11 @@ class GeneticAlgorithm:
             self.fitness_visualizer.update(best_portfolio, generation)
 
             #Check for stagnation
-            if(self.fitness_stagnation(generation)):
-                self.adjust_parameters()
+            status = self.detect_stagnation()
+            if status == 'stagnation':
+                self.adjust_parameters('stagnation')
+            elif status == 'recovered':
+                self.adjust_parameters('recovered')
 
             # Check for maximum generations
             if self.max_generations and generation >= self.max_generations:
@@ -147,3 +151,6 @@ class GeneticAlgorithm:
         print(f"Stopped at generation {generation} with a fitness of {best_fitness:.6f}")
 
         return best_portfolio
+
+
+

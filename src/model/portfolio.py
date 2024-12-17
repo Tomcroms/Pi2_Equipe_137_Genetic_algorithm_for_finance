@@ -6,10 +6,11 @@ class Portfolio:
     mutation_rate = 0.1  # Default mutation rate
     sigma = 0.1  # Default mutation standard deviation
 
-    def __init__(self, shares, stocks, cov_matrix, fitness_function, crossover_function, mutation_function, budget, risk_aversion):
+    def __init__(self, shares, stocks, cov_matrix, is_short_available, fitness_function, crossover_function, mutation_function, budget, risk_aversion):
         self.shares = np.array(shares)
         self.stocks = stocks  # List of Stock objects
         self.cov_matrix = cov_matrix  # Covariance matrix
+        self.is_short_available = is_short_available
         self.fitness_function = fitness_function
         #self.selection_method = selection_method
         self.crossover_function = crossover_function
@@ -24,7 +25,8 @@ class Portfolio:
 
     def calculate_total_investment(self):
         prices = np.array([stock.price for stock in self.stocks])
-        return np.dot(self.shares, prices)
+        shares = np.abs(self.shares)
+        return np.dot(shares, prices)
     
     def calculate_expected_return(self):
         expected_returns = np.array([stock.expected_return for stock in self.stocks])
@@ -84,7 +86,10 @@ class Portfolio:
 
     def __invert__(self):
         if(not self.mutation_function):
-            mutated_child = self.gaussian_mutation()
+            try:
+                mutated_child = self.gaussian_mutation()
+            except Exception as e:
+                print(f"Erreur gaussian mutation {e}")
         
         elif(self.mutation_function == "polynomial mutation"):
             mutated_child = self.polynomial_mutation()
@@ -108,9 +113,10 @@ class Portfolio:
             child_share = 0.5 * ((1 + beta) * self.shares[i] + (1 - beta) * other.shares[i])
             child_shares.append(child_share)
         # Ensure non-negative shares
-        child_shares = np.maximum(child_shares, 0)
+        if(not self.is_short_available): 
+            child_shares = np.maximum(child_shares, 0)
         # Re-scale shares to match the budget
-        child_portfolio = Portfolio(child_shares, self.stocks, self.cov_matrix, self.fitness_function, self.crossover_function, self.mutation_function, self.budget, self.risk_aversion)
+        child_portfolio = Portfolio(child_shares, self.stocks, self.cov_matrix, self.is_short_available, self.fitness_function, self.crossover_function, self.mutation_function, self.budget, self.risk_aversion)
         child_portfolio.adjust_shares_to_budget()
         child_portfolio.calculate_fitness()
         return child_portfolio
@@ -125,8 +131,9 @@ class Portfolio:
             # On choisit un point dans [L - alpha*I, U + alpha*I]
             val = np.random.uniform(L - alpha * I, U + alpha * I)
             child_shares.append(val)
-        child_shares = np.maximum(child_shares, 0)
-        child_portfolio = Portfolio(child_shares, self.stocks, self.cov_matrix, self.fitness_function, self.crossover_function, self.mutation_function, self.budget, self.risk_aversion)
+        if(not self.is_short_available): 
+            child_shares = np.maximum(child_shares, 0)
+        child_portfolio = Portfolio(child_shares, self.stocks, self.cov_matrix, self.is_short_available, self.fitness_function, self.crossover_function, self.mutation_function, self.budget, self.risk_aversion)
         child_portfolio.adjust_shares_to_budget()
         child_portfolio.calculate_fitness()
         return child_portfolio
@@ -134,11 +141,15 @@ class Portfolio:
     def arithmetic_crossover(self, other):
         r = np.random.rand()
         child_shares = r * self.shares + (1 - r) * other.shares
-        child_shares = np.maximum(child_shares, 0)
+        if(not self.is_short_available): 
+            child_shares = np.maximum(child_shares, 0)
         child_portfolio = Portfolio(child_shares, self.stocks, self.cov_matrix, self.fitness_function, self.crossover_function, self.mutation_function, self.budget, self.risk_aversion)
         child_portfolio.adjust_shares_to_budget()
         child_portfolio.calculate_fitness()
         return child_portfolio
+
+
+        # mutated_shares[len(mutated_shares)-1] = -2000
 
 
     #Mutation methods
@@ -147,13 +158,19 @@ class Portfolio:
         mutated_shares = self.shares.copy()
         for i in range(len(mutated_shares)):
             if np.random.rand() < Portfolio.mutation_rate:
-                mutated_shares[i] += np.random.normal(0, Portfolio.sigma * mutated_shares[i])
-        # Ensure non-negative shares
-        mutated_shares = np.maximum(mutated_shares, 0)
-        # Re-scale shares to match the budget
-        mutated_portfolio = Portfolio(mutated_shares, self.stocks, self.cov_matrix, self.fitness_function, self.crossover_function, self.mutation_function, self.budget, self.risk_aversion)
-        mutated_portfolio.adjust_shares_to_budget()
-        mutated_portfolio.calculate_fitness()
+                mutated_shares[i] += np.random.normal(0, Portfolio.sigma * abs(mutated_shares[i]))
+        if(not self.is_short_available): 
+            mutated_shares = np.maximum(mutated_shares, 0)
+        
+        mutated_portfolio = Portfolio(mutated_shares, self.stocks, self.cov_matrix, self.is_short_available, self.fitness_function, self.crossover_function, self.mutation_function, self.budget, self.risk_aversion)
+        try:
+            mutated_portfolio.adjust_shares_to_budget()
+        except Exception as e:
+            print(f"Erreur adjust shares {e}")
+        try:    
+            mutated_portfolio.calculate_fitness()
+        except Exception as e:
+            print(f"Erreur adjust shares {e}")
         return mutated_portfolio
     
     def polynomial_mutation(self):
@@ -164,10 +181,10 @@ class Portfolio:
                 u = np.random.rand()
                 delta = (2 * u) ** (1.0 / (eta_m + 1)) - 1 if u <= 0.5 else 1 - (2 * (1 - u)) ** (1.0 / (eta_m + 1))
                 mutated_shares[i] = mutated_shares[i] * (1 + delta)
-                # S'assurer des bornes non négatives
-                if mutated_shares[i] < 0:
+                # Non negative shares
+                if(not self.is_short_available and mutated_shares[i] < 0):
                     mutated_shares[i] = 0
-        mutated_portfolio = Portfolio(mutated_shares, self.stocks, self.cov_matrix, self.fitness_function, self.crossover_function, self.mutation_function, self.budget, self.risk_aversion)
+        mutated_portfolio = Portfolio(mutated_shares, self.stocks, self.cov_matrix, self.is_short_available, self.fitness_function, self.crossover_function, self.mutation_function, self.budget, self.risk_aversion)
         mutated_portfolio.adjust_shares_to_budget()
         mutated_portfolio.calculate_fitness()
         return mutated_portfolio
@@ -176,8 +193,10 @@ class Portfolio:
         mutated_shares = self.shares.copy()
         for i in range(len(mutated_shares)):
             if np.random.rand() < Portfolio.mutation_rate:
-                mutated_shares[i] = np.random.uniform(0, np.sqrt(self.shares[i]))
-        mutated_portfolio = Portfolio(mutated_shares, self.stocks, self.cov_matrix, self.fitness_function, self.crossover_function, self.mutation_function, self.budget, self.risk_aversion)
+                mutated_shares[i] = np.random.uniform(self.shares[i] - np.sqrt(self.shares[i]), self.shares[i] + np.sqrt(self.shares[i]))
+        if(not self.is_short_available): 
+            mutated_shares = np.maximum(mutated_shares, 0)
+        mutated_portfolio = Portfolio(mutated_shares, self.stocks, self.cov_matrix, self.is_short_available, self.fitness_function, self.crossover_function, self.mutation_function, self.budget, self.risk_aversion)
         mutated_portfolio.adjust_shares_to_budget()
         mutated_portfolio.calculate_fitness()
         return mutated_portfolio

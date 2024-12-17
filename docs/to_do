@@ -5,13 +5,11 @@ Autres algo à tester potentiellement
 
 Code python algo génétique
 
-
-    - ajouter d'autres méthodes de croisement / mutation
-    - paralléliser + tableau récapitulatif des différentes méthodes -> comparer les meilleurs portefeuilles obtenues après x nombre de générations
-    - ajouter dans le tableau final la Cvar, VaR, sharpe ratio, fonction d'utilité quadratique
-    - ajouter visualisation du meilleur portefeuille
+    - ajuster les paramètres en fonction de si la progression avance bien ou non (on est sorti d'un minimum local ou on est bloqué dedans)
     - fenêtre graphique où on choisit les paramètres de l'algorithme (sélection, croisement, mutation, paramètres...)
-    - diminuer les paramètres en fonction de si la progression recommence (on est sorti d'un minimum local)
+    - paralléliser + tableau récapitulatif des différentes méthodes -> comparer les meilleurs portefeuilles obtenues après x nombre de générations
+    
+    - ajouter dans le tableau final la Cvar, VaR, sharpe ratio, fonction d'utilité quadratique
     - ajouter possibilté ou non de shares négatives
     - base de donnée plutôt que csv 
 
@@ -25,3 +23,7 @@ Fait
     - corriger le problème des portefeuilles dont le budget vaut exactement le budget (fonction penalty trop grande)
     - corriger le problème d'affichage du meilleur portefeuille (ne correspond pas aux données de l'affichage graphique)
     - ajouter d'autres fonctions objectives -> sharpe ratio + autres
+    - ajouter d'autres méthodes de croisement / mutation
+    - ajouter visualisation du meilleur portefeuille
+
+
