@@ -6,11 +6,13 @@ from view.fitness_visualization import FitnessVisualizer
 import time
 
 class GeneticAlgorithm:
-    def __init__(self, stocks, cov_matrix, population_size, fitness_function, selection_method=None, risk_aversion=4, budget=10000000, max_generations=None):
+    def __init__(self, stocks, cov_matrix, population_size, fitness_function=None, crossover_function=None, mutation_function=None, selection_method=None, risk_aversion=4, budget=10000000, max_generations=None):
         self.stocks = stocks
         self.cov_matrix = cov_matrix
         self.population_size = population_size  #number of portfolio generated at each step
         self.fitness_function = fitness_function
+        self.crossover_function = crossover_function
+        self.mutation_function = mutation_function
         self.risk_aversion = risk_aversion
         self.budget = budget
         self.population = self.initialize_population()
@@ -28,14 +30,14 @@ class GeneticAlgorithm:
             # Generate random number of shares within the budget
             shares = np.random.rand(len(self.stocks)) * (self.budget / prices)
             shares = np.floor(shares)  # Use whole shares
-            portfolio = Portfolio(shares, self.stocks, self.cov_matrix, self.fitness_function, self.budget, self.risk_aversion)
+            portfolio = Portfolio(shares, self.stocks, self.cov_matrix, self.fitness_function, self.crossover_function, self.mutation_function, self.budget, self.risk_aversion)
             population.append(portfolio)
         return population
     
     def adjust_parameters(self):
         Portfolio.eta = max(0.5, Portfolio.eta * 0.9)                                       # Decrease eta, but not below 0.5
         Portfolio.mutation_rate = min(1, Portfolio.mutation_rate * 1.1)                     # Increase up to 100%
-        Portfolio.sigma = min(0.5, Portfolio.sigma * 1.1)                                             # Increase sigma
+        Portfolio.sigma = min(0.5, Portfolio.sigma * 1.1)                                   # Increase sigma
         print(f"New parameters: eta={Portfolio.eta}, mutation_rate={Portfolio.mutation_rate}, sigma={Portfolio.sigma}")
 
     def fitness_stagnation(self, generation, stagnation_limit=3):

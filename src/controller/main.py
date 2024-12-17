@@ -23,7 +23,7 @@ def main():
         return
 
     try:
-        ga = GeneticAlgorithm(stocks, cov_matrix, population_size=100, fitness_function="sharpe_ratio", selection_method=None, risk_aversion=6, budget=1_000_000_000, max_generations=1000)
+        ga = GeneticAlgorithm(stocks, cov_matrix, population_size=100, fitness_function="sharpe_ratio", crossover_function=None, mutation_function=None, selection_method=None, risk_aversion=6, budget=1_000_000_000, max_generations=1000)
         best_portfolio = ga.evolve(fitness_threshold=15)
 
         print("Best portfolio:")

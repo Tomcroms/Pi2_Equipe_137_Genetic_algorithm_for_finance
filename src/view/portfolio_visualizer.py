@@ -5,7 +5,7 @@ class PortfolioVisualizer:
     def __init__(self):
         plt.ion()  # Activate interactive mode
         self.fig, self.ax = plt.subplots()
-        self.ax.set_xlabel('Standard Deviation (%)')
+        self.ax.set_xlabel('Volatility (%)')
         self.ax.set_ylabel('Expected Return (%)')
         self.scatter = self.ax.scatter([], [], s=[], c=[])
         self.portfolios = []  # List to store portfolio data
