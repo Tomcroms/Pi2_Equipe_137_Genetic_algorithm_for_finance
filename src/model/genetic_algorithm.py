@@ -132,7 +132,7 @@ class GeneticAlgorithm:
             self.best_fitness_history.append(best_fitness)
             print(f"Generation {generation}: Best fitness = {best_fitness:.6f}")
 
-            self.portfolio_visualizer.update(self.population)
+            self.portfolio_visualizer.update(self.population, best_portfolio)
             self.fitness_visualizer.update(best_portfolio, generation)
 
             #Check for stagnation
