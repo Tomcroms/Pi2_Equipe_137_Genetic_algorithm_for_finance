@@ -6,10 +6,11 @@ from view.fitness_visualization import FitnessVisualizer
 import time
 
 class GeneticAlgorithm:
-    def __init__(self, stocks, cov_matrix, population_size, selection_method="tournament_selection", risk_aversion=4, budget=10000000, max_generations=None):
+    def __init__(self, stocks, cov_matrix, population_size, fitness_function, selection_method=None, risk_aversion=4, budget=10000000, max_generations=None):
         self.stocks = stocks
         self.cov_matrix = cov_matrix
         self.population_size = population_size  #number of portfolio generated at each step
+        self.fitness_function = fitness_function
         self.risk_aversion = risk_aversion
         self.budget = budget
         self.population = self.initialize_population()
@@ -27,7 +28,7 @@ class GeneticAlgorithm:
             # Generate random number of shares within the budget
             shares = np.random.rand(len(self.stocks)) * (self.budget / prices)
             shares = np.floor(shares)  # Use whole shares
-            portfolio = Portfolio(shares, self.stocks, self.cov_matrix, self.budget, self.risk_aversion)
+            portfolio = Portfolio(shares, self.stocks, self.cov_matrix, self.fitness_function, self.budget, self.risk_aversion)
             population.append(portfolio)
         return population
     

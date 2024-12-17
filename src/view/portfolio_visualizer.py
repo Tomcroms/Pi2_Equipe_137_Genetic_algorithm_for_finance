@@ -18,8 +18,8 @@ class PortfolioVisualizer:
 
         # Add new portfolios with age 0
         for portfolio in portfolios:
-            std_dev = portfolio.get_standard_deviation_percentage()
-            expected_return = portfolio.calculate_expected_return_by_percentage()
+            std_dev = portfolio.get_volatility_percentage()
+            expected_return = portfolio.calculate_expected_return()*100
             self.portfolios.append({
                 'std_dev': std_dev,
                 'expected_return': expected_return,

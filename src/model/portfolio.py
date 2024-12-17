@@ -6,10 +6,11 @@ class Portfolio:
     mutation_rate = 0.1  # Default mutation rate
     sigma = 0.1  # Default mutation standard deviation
 
-    def __init__(self, shares, stocks, cov_matrix, budget, risk_aversion):
+    def __init__(self, shares, stocks, cov_matrix, fitness_function, budget, risk_aversion):
         self.shares = np.array(shares)
         self.stocks = stocks  # List of Stock objects
         self.cov_matrix = cov_matrix  # Covariance matrix
+        self.fitness_function = fitness_function
         self.budget = budget
         self.risk_aversion = risk_aversion
         self.total_investment = self.calculate_total_investment()
@@ -22,13 +23,13 @@ class Portfolio:
         prices = np.array([stock.price for stock in self.stocks])
         return np.dot(self.shares, prices)
 
-    def calculate_expected_return(self):
-        expected_returns = np.array([stock.expected_return for stock in self.stocks])
-        prices = np.array([stock.price for stock in self.stocks])
-        investment = prices * self.shares
-        return np.dot(investment, expected_returns)
+    # def calculate_expected_return(self):
+    #     expected_returns = np.array([stock.expected_return for stock in self.stocks])
+    #     prices = np.array([stock.price for stock in self.stocks])
+    #     investment = prices * self.shares
+    #     return np.dot(investment, expected_returns)
     
-    def calculate_expected_return_by_percentage(self):
+    def calculate_expected_return(self):
         expected_returns = np.array([stock.expected_return for stock in self.stocks])
         prices = np.array([stock.price for stock in self.stocks])
         total_investment = np.dot(prices, self.shares)
@@ -41,21 +42,28 @@ class Portfolio:
         weights = investment / self.total_investment
         return np.dot(weights.T, np.dot(self.cov_matrix, weights)) * self.total_investment**2
 
-    def calculate_fitness(self, penalty_factor=1000):
+    def calculate_fitness(self):
         # Avoid division by zero
         if self.total_investment == 0:
             self.fitness = -np.inf  # Assign a very low fitness if there's no investment
             return
-
+        
         # Calculate per-unit return and variance
-        return_per_unit = self.expected_return / self.total_investment
+        return_per_unit = self.expected_return
         variance_per_unit = self.variance / (self.total_investment ** 2)
 
-        # Penalty for under-investment
-        investment_ratio = self.total_investment / self.budget
-        penalty = abs(1 - investment_ratio) * penalty_factor  # <-- Adjust the penalty
-        # Fitness calculation
-        self.fitness = return_per_unit - (self.risk_aversion / 2) * variance_per_unit - penalty
+        if(not self.fitness_function):
+            self.fitness_with_quadratic_utility_function(return_per_unit, variance_per_unit)
+            return
+        elif(self.fitness_function=="sharpe_ratio"):
+            self.fitness_with_sharpe_ratio(return_per_unit, variance_per_unit)
+            return 
+
+    def fitness_with_quadratic_utility_function(self, return_per_unit, variance_per_unit):
+        self.fitness = return_per_unit - (self.risk_aversion / 2) * variance_per_unit
+
+    def fitness_with_sharpe_ratio(self, return_per_unit, variance_per_unit):
+        self.fitness = (np.sqrt(return_per_unit) / variance_per_unit)
 
     def adjust_shares_to_budget(self):
         total_value = self.calculate_total_investment()
@@ -79,7 +87,7 @@ class Portfolio:
         # Ensure non-negative shares
         child_shares = np.maximum(child_shares, 0)
         # Re-scale shares to match the budget
-        child_portfolio = Portfolio(child_shares, self.stocks, self.cov_matrix, self.budget, self.risk_aversion)
+        child_portfolio = Portfolio(child_shares, self.stocks, self.cov_matrix, self.fitness_function, self.budget, self.risk_aversion)
         child_portfolio.adjust_shares_to_budget()
         child_portfolio.calculate_fitness()
         return child_portfolio
@@ -94,7 +102,7 @@ class Portfolio:
         # Ensure non-negative shares
         mutated_shares = np.maximum(mutated_shares, 0)
         # Re-scale shares to match the budget
-        mutated_portfolio = Portfolio(mutated_shares, self.stocks, self.cov_matrix, self.budget, self.risk_aversion)
+        mutated_portfolio = Portfolio(mutated_shares, self.stocks, self.cov_matrix, self.fitness_function, self.budget, self.risk_aversion)
         mutated_portfolio.adjust_shares_to_budget()
         mutated_portfolio.calculate_fitness()
         return mutated_portfolio
@@ -102,14 +110,13 @@ class Portfolio:
     def get_expected_return_percentage(self):
         if self.total_investment == 0:
             return 0
-        return (self.expected_return / self.total_investment) * 100
+        return self.expected_return
 
-    def get_standard_deviation_percentage(self):
+    def get_volatility_percentage(self):
         if self.total_investment == 0:
             return 0
-        variance_of_returns = self.variance / (self.total_investment ** 2)
-        std_dev = np.sqrt(variance_of_returns)
-        return std_dev * 100
+        variance_of_returns = self.variance / (self.total_investment ** 2)*100
+        return variance_of_returns
 
     #Static methods
     @staticmethod
@@ -123,7 +130,7 @@ class Portfolio:
     
     @staticmethod
     def selection(population, selection_method):
-        if(selection_method==None):
+        if(not selection_method):
             return Portfolio.tournament_selection(population)
         
         elif(selection_method=="autre_methode"):
@@ -132,9 +139,4 @@ class Portfolio:
         else:
             print("Unknown selection method...")
             raise Exception
-        
 
-
-
-
-    

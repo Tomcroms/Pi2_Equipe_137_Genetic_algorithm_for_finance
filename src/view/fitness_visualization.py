@@ -44,7 +44,7 @@ class FitnessVisualizer:
         """
         # Extract metrics
         exp_return = portfolio.get_expected_return_percentage()
-        volatility = portfolio.get_standard_deviation_percentage()
+        volatility = portfolio.get_volatility_percentage()
         fitness = portfolio.fitness
         
         # Append to lists

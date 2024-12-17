@@ -23,16 +23,14 @@ def main():
         return
 
     try:
-        ga = GeneticAlgorithm(stocks, cov_matrix, population_size=100, selection_method=None, risk_aversion=6, budget=1_000_000_000, max_generations=1000)
-        best_portfolio = ga.evolve(fitness_threshold=0.030)
+        ga = GeneticAlgorithm(stocks, cov_matrix, population_size=100, fitness_function="sharpe_ratio", selection_method=None, risk_aversion=6, budget=1_000_000_000, max_generations=1000)
+        best_portfolio = ga.evolve(fitness_threshold=15)
 
         print("Best portfolio:")
         for stock, shares in zip(best_portfolio.stocks, best_portfolio.shares):
             print(f"{stock.name}: {shares} shares")
-        print(f"Total Investment: ${best_portfolio.total_investment:.2f}")
-        print(f"Expected Return: ${best_portfolio.expected_return:.2f} ({best_portfolio.get_expected_return_percentage():.2f}%)")
-        print(f"Variance: {best_portfolio.variance:.2f}")
-        print(f"Standard Deviation of Returns: {best_portfolio.get_standard_deviation_percentage():.2f}%")
+        print(f"Expected Return (calculate_expected_return_by_percentage): {(best_portfolio.calculate_expected_return()*100)}%")
+        print(f"Variance: {best_portfolio.get_volatility_percentage():.2f}")
 
         time.sleep(1000)
 
