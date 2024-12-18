@@ -51,10 +51,10 @@ class Portfolio:
         return_per_unit = self.expected_return
         variance_per_unit = self.variance / (self.total_investment ** 2)
 
-        if(not self.fitness_function):
+        if(not self.fitness_function or self.fitness_function == "quadratic utility"):
             self.fitness_with_quadratic_utility_function(return_per_unit, variance_per_unit)
             return
-        elif(self.fitness_function=="sharpe_ratio"):
+        elif(self.fitness_function=="sharpe ratio"):
             self.fitness_with_sharpe_ratio(return_per_unit, variance_per_unit)
             return 
 
@@ -73,7 +73,7 @@ class Portfolio:
         self.total_investment = self.calculate_total_investment()
 
     def __add__(self, other):
-        if(not self.crossover_function):
+        if(not self.crossover_function or self.crossover_function == "simulated binary crossover"):
             crossed_child = self.simulated_binary_crossover(other)
         
         elif(self.crossover_function == "blend crossover"):
@@ -85,7 +85,7 @@ class Portfolio:
         return crossed_child
 
     def __invert__(self):
-        if(not self.mutation_function):
+        if(not self.mutation_function or self.mutation_function == "gaussian mutation"):
             try:
                 mutated_child = self.gaussian_mutation()
             except Exception as e:
@@ -147,9 +147,6 @@ class Portfolio:
         child_portfolio.adjust_shares_to_budget()
         child_portfolio.calculate_fitness()
         return child_portfolio
-
-
-        # mutated_shares[len(mutated_shares)-1] = -2000
 
 
     #Mutation methods
@@ -227,7 +224,7 @@ class Portfolio:
     
     @staticmethod
     def selection(population, selection_method):
-        if(not selection_method):
+        if(not selection_method or selection_method=="tournament selection"):
             return Portfolio.tournament_selection(population)
         
         elif(selection_method=="autre_methode"):

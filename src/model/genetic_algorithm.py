@@ -19,7 +19,9 @@ class GeneticAlgorithm:
         self.population = self.initialize_population()
         self.selection_method = selection_method
         self.max_generations = max_generations
+        self.in_stagnation_phase = False
         self.stagnation_counter = 0
+        self.recovery_counter = 0
         self.best_fitness_history = []
         self.portfolio_visualizer = PortfolioVisualizer()
         self.fitness_visualizer = FitnessVisualizer()
@@ -35,52 +37,6 @@ class GeneticAlgorithm:
             population.append(portfolio)
         return population
     
-    def adjust_parameters(self):
-        Portfolio.eta = max(0.5, Portfolio.eta * 0.9)                                       # Decrease eta, but not below 0.5
-        Portfolio.mutation_rate = min(1, Portfolio.mutation_rate * 1.1)                     # Increase up to 100%
-        Portfolio.sigma = min(0.5, Portfolio.sigma * 1.1)                                   # Increase sigma
-        print(f"New parameters: eta={Portfolio.eta}, mutation_rate={Portfolio.mutation_rate}, sigma={Portfolio.sigma}")
-
-    def fitness_stagnation(self, generation, stagnation_limit=3):
-        stagnation = False
-        if generation > 2:
-            fitness_change = self.best_fitness_history[-1] - self.best_fitness_history[-2]
-            min_improvement = 1e-6                                                          # Threshold for minimal improvement
-            if abs(fitness_change) < min_improvement:
-                self.stagnation_counter += 1
-            else:
-                self.stagnation_counter = 0
-
-            if self.stagnation_counter >= stagnation_limit:
-                stagnation=True
-        
-        return stagnation
-
-    def fitness_stagnation2(self, generation, threshold=0.001):
-        """
-        Check if the fitness function shows stagnation based on the derivative of the moving average.
-        """
-        window_size = 5
-        if len(self.best_fitness_history) < window_size:
-            return False
-
-        # Compute the moving average
-        moving_avg = np.convolve(
-            self.best_fitness_history, np.ones(window_size) / window_size, mode='valid'
-        )
-
-        # Compute the derivative of the moving average
-        if len(moving_avg) > 1:
-            derivative = np.diff(moving_avg)
-            print(f"Moving average derivative (last): {derivative[-1]:.6f}")
-
-            # Check if the last derivative is below the threshold
-            if derivative[-1] < threshold:
-                print("Fitness is stagnating based on moving average.")
-                return True
-
-        return False
-
     def compute_global_progression(self):
         """
         Compute and print global progression metrics: cumulative improvement and mean rate.
@@ -102,6 +58,118 @@ class GeneticAlgorithm:
         print(f"Cumulative progression: {cumulative_progression:.6f}")
         print(f"Mean progression rate: {mean_progression_rate:.6f}")
         print("==================================")
+
+    def fitness_progress_metric(self, window_size=5):
+        # Compute the moving average of best fitness
+        if len(self.best_fitness_history) < window_size:
+            return None, None
+        moving_avg = np.convolve(self.best_fitness_history, np.ones(window_size) / window_size, mode='valid')
+        
+        # Compute the derivative of the moving average
+        if len(moving_avg) > 1:
+            derivative = np.diff(moving_avg)
+            return moving_avg, derivative
+        return moving_avg, None
+    
+    def detect_stagnation(self, window_size=5, stagnation_threshold=2e-5, recovery_threshold=2e-5, consecutive=3):
+        """
+        Uses hysteresis:
+        - If derivative < stagnation_threshold for `consecutive` times, declare stagnation.
+        - If derivative > recovery_threshold for `consecutive` times, declare recovery.
+        """
+        moving_avg, derivative = self.fitness_progress_metric(window_size)
+        if derivative is None:
+            return 'none'
+        
+        last_values = derivative[-consecutive:] if len(derivative) >= consecutive else derivative
+        avg_last_derivative = np.mean(last_values)
+        
+        if self.in_stagnation_phase:
+            # If already in stagnation, check for recovery
+            if avg_last_derivative > recovery_threshold:
+                self.recovery_counter += 1
+                if self.recovery_counter >= consecutive:
+                    # Declare recovery
+                    self.in_stagnation_phase = False
+                    self.recovery_counter = 0
+                    return 'recovered'
+            else:
+                self.recovery_counter = 0
+        else:
+            # Not in stagnation, check for stagnation
+            if avg_last_derivative < stagnation_threshold:
+                self.stagnation_counter += 1
+                if self.stagnation_counter >= consecutive:
+                    # Declare stagnation
+                    self.in_stagnation_phase = True
+                    self.stagnation_counter = 0
+                    return 'stagnation'
+            else:
+                self.stagnation_counter = 0
+        
+        return 'none'
+
+    def detect_stagnation2(self, window_size=5, stagnation_threshold=2e-5, recovery_threshold=2e-5, consecutive=3):
+        """
+        Uses hysteresis:
+        - If derivative < stagnation_threshold for `consecutive` times, declare stagnation.
+        - If derivative > recovery_threshold for `consecutive` times, declare recovery.
+        """
+        moving_avg, derivative = self.fitness_progress_metric(window_size)
+        if derivative is None:
+            return 'none'
+        
+        last_values = derivative[-consecutive:] if len(derivative) >= consecutive else derivative
+        avg_last_derivative = np.mean(last_values)
+        
+        if self.in_stagnation_phase:
+            # Still check derivative
+            if avg_last_derivative < stagnation_threshold:
+                self.stagnation_extension_counter += 1
+                if self.stagnation_extension_counter >= consecutive:
+                    # Already in stagnation but no improvement? Increase parameters again
+                    self.adjust_parameters('stagnation') 
+                    self.stagnation_extension_counter = 0
+            else:
+                self.stagnation_extension_counter = 0
+
+            # Check if we can recover
+            if avg_last_derivative > recovery_threshold:
+                self.recovery_counter += 1
+                if self.recovery_counter >= consecutive:
+                    self.in_stagnation_phase = False
+                    self.recovery_counter = 0
+                    self.stagnation_extension_counter = 0
+                    return 'recovered'
+            else:
+                self.recovery_counter = 0
+        else:
+            # Normal check for stagnation
+            if avg_last_derivative < stagnation_threshold:
+                self.stagnation_counter += 1
+                if self.stagnation_counter >= consecutive:
+                    self.in_stagnation_phase = True
+                    self.stagnation_counter = 0
+                    self.stagnation_extension_counter = 0
+                    return 'stagnation'
+            else:
+                self.stagnation_counter = 0
+        
+        return 'none'
+
+    def adjust_parameters(self, mode):
+        if mode == 'stagnation':
+            # Increase exploration
+            Portfolio.mutation_rate = min(1, Portfolio.mutation_rate * 1.1)
+            Portfolio.sigma = min(0.5, Portfolio.sigma * 1.1)
+            Portfolio.eta = max(0.5, Portfolio.eta * 0.9)
+            print(f"Stagnation: Increased mutation. eta={Portfolio.eta}, mutation_rate={Portfolio.mutation_rate}, sigma={Portfolio.sigma}")
+        elif mode == 'recovered':
+            # Decrease exploration slowly back to baseline
+            Portfolio.mutation_rate = max(0.01, Portfolio.mutation_rate * 0.90)
+            Portfolio.sigma = max(0.01, Portfolio.sigma * 0.90)
+            Portfolio.eta = min(1.0, Portfolio.eta * 1.1)
+            print(f"Recovery: Reduced mutation. eta={Portfolio.eta}, mutation_rate={Portfolio.mutation_rate}, sigma={Portfolio.sigma}")
 
     def evolve(self, fitness_threshold):
         generation = 0
@@ -137,7 +205,7 @@ class GeneticAlgorithm:
             self.fitness_visualizer.update(best_portfolio, generation)
 
             #Check for stagnation
-            status = self.detect_stagnation()
+            status = self.detect_stagnation2()
             if status == 'stagnation':
                 self.adjust_parameters('stagnation')
             elif status == 'recovered':
