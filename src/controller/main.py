@@ -9,10 +9,11 @@ sys.path.insert(0, project_root)
 from model.genetic_algorithm import GeneticAlgorithm
 from model.data_loader import DataLoader
 import time
+import tkinter as tk
+from view.gui import GAParameterView
 
 
 def main():
-
     file_path = 'data/Cac40_Prices_2000_to_Today.xlsx'
     data_loader = DataLoader(file_path)
     
@@ -22,8 +23,36 @@ def main():
         print(f"An error occurred: {e}")
         return
 
+    # Create a root window for the parameter view
+    root = tk.Tk()
+    root.withdraw()  # hide the main window
+
+    # Show the GAParameterView as a modal dialog
+    param_view = GAParameterView(master=root)
+    root.wait_window(param_view)
+
+    if not param_view.parameters_confirmed:
+        print("No parameters selected. Exiting.")
+        return
+
+    params = param_view.get_parameters()
+
+    # Now instantiate and run the GA with chosen parameters
     try:
-        ga = GeneticAlgorithm(stocks, cov_matrix, population_size=100, is_short_available=False, fitness_function="sharpe_ratio", crossover_function=None, mutation_function=None, selection_method=None, risk_aversion=6, budget=1_000_000_000, max_generations=1000)
+        ga = GeneticAlgorithm(
+            stocks,
+            cov_matrix,
+            population_size=params["population_size"],
+            is_short_available=params["is_short_available"],
+            fitness_function=params["fitness_function"],
+            crossover_function=params["crossover_function"],
+            mutation_function=params["mutation_function"],
+            selection_method=params["selection_method"],
+            risk_aversion=params["risk_aversion"],
+            budget=params["budget"],
+            max_generations=params["max_generations"]
+        )
+
         best_portfolio = ga.evolve(fitness_threshold=15)
 
         print("Best portfolio:")
@@ -36,7 +65,6 @@ def main():
 
     except Exception as e:
         print(f"Erreur inconnue:\n{e}")
-
-
+        
 if __name__ == "__main__":
     main()
