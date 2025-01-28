@@ -70,46 +70,8 @@ class GeneticAlgorithm:
             derivative = np.diff(moving_avg)
             return moving_avg, derivative
         return moving_avg, None
-    
-    def detect_stagnation(self, window_size=5, stagnation_threshold=2e-5, recovery_threshold=2e-5, consecutive=3):
-        """
-        Uses hysteresis:
-        - If derivative < stagnation_threshold for `consecutive` times, declare stagnation.
-        - If derivative > recovery_threshold for `consecutive` times, declare recovery.
-        """
-        moving_avg, derivative = self.fitness_progress_metric(window_size)
-        if derivative is None:
-            return 'none'
-        
-        last_values = derivative[-consecutive:] if len(derivative) >= consecutive else derivative
-        avg_last_derivative = np.mean(last_values)
-        
-        if self.in_stagnation_phase:
-            # If already in stagnation, check for recovery
-            if avg_last_derivative > recovery_threshold:
-                self.recovery_counter += 1
-                if self.recovery_counter >= consecutive:
-                    # Declare recovery
-                    self.in_stagnation_phase = False
-                    self.recovery_counter = 0
-                    return 'recovered'
-            else:
-                self.recovery_counter = 0
-        else:
-            # Not in stagnation, check for stagnation
-            if avg_last_derivative < stagnation_threshold:
-                self.stagnation_counter += 1
-                if self.stagnation_counter >= consecutive:
-                    # Declare stagnation
-                    self.in_stagnation_phase = True
-                    self.stagnation_counter = 0
-                    return 'stagnation'
-            else:
-                self.stagnation_counter = 0
-        
-        return 'none'
 
-    def detect_stagnation2(self, window_size=5, stagnation_threshold=2e-5, recovery_threshold=2e-5, consecutive=3):
+    def detect_stagnation(self, window_size=5, stagnation_threshold=2e-5, recovery_threshold=2e-5, consecutive=3):
         """
         Uses hysteresis:
         - If derivative < stagnation_threshold for `consecutive` times, declare stagnation.
@@ -205,7 +167,7 @@ class GeneticAlgorithm:
             self.fitness_visualizer.update(best_portfolio, generation)
 
             #Check for stagnation
-            status = self.detect_stagnation2()
+            status = self.detect_stagnation()
             if status == 'stagnation':
                 self.adjust_parameters('stagnation')
             elif status == 'recovered':
