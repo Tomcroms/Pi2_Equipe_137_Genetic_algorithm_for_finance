@@ -6,7 +6,8 @@ class Portfolio:
     mutation_rate = 0.1  # Default mutation rate
     sigma = 0.1  # Default mutation standard deviation
 
-    def __init__(self, shares, stocks, cov_matrix, is_short_available, fitness_function, crossover_function, mutation_function, budget, risk_aversion):
+    def __init__(self, shares, stocks, cov_matrix, is_short_available, fitness_function, crossover_function, mutation_function, budget, risk_aversion, risk_free_rate=None):
+        self.risk_free_rate = 0.02 if risk_free_rate is None else risk_free_rate
         self.shares = np.array(shares)
         self.stocks = stocks  # List of Stock objects
         self.cov_matrix = cov_matrix  # Covariance matrix
@@ -25,22 +26,53 @@ class Portfolio:
 
     def calculate_total_investment(self):
         prices = np.array([stock.price for stock in self.stocks])
-        shares = np.abs(self.shares)
-        return np.dot(shares, prices)
+        positions = prices * self.shares
+        if not self.is_short_available:
+            long_positions = np.maximum(positions, 0.0)
+            return float(np.sum(long_positions))
+        else:
+            return float(np.sum(np.abs(positions)))
     
     def calculate_expected_return(self):
-        expected_returns = np.array([stock.expected_return for stock in self.stocks])
         prices = np.array([stock.price for stock in self.stocks])
-        total_investment = np.dot(prices, self.shares)
-        weights = (prices * self.shares) / total_investment
-        return np.dot(weights, expected_returns)
+        positions = prices * self.shares
+
+        #𝜇
+        mu = np.array([stock.expected_return for stock in self.stocks])
+
+        if not self.is_short_available:
+            long_positions = np.maximum(positions, 0.0)
+            total = float(np.sum(long_positions))
+            if total <= 0:
+                return 0.0
+            weights = long_positions / total
+        else:
+            total = float(np.sum(np.abs(positions)))
+            if total <= 0:
+                return 0.0
+            weights = positions / total
+
+        return float(np.dot(weights, mu))
 
     def calculate_variance(self):
         prices = np.array([stock.price for stock in self.stocks])
-        investment = prices * self.shares
-        weights = investment / self.total_investment
-        return np.dot(weights.T, np.dot(self.cov_matrix, weights)) * self.total_investment**2
+        positions = prices * self.shares
 
+        if not self.is_short_available:
+            long_positions = np.maximum(positions, 0.0)
+            total = float(np.sum(long_positions))
+            if total <= 0:
+                return 0.0
+            weights = long_positions / total
+        else:
+            total = float(np.sum(np.abs(positions)))
+            if total <= 0:
+                return 0.0
+            weights = positions / total  # signés, normalisés par l'expo brute
+
+        var_per_unit = float(np.dot(weights.T, np.dot(self.cov_matrix, weights)))
+        return var_per_unit * (total ** 2)
+    
     def calculate_fitness(self):
         # Avoid division by zero
         if self.total_investment == 0:
@@ -62,15 +94,32 @@ class Portfolio:
         self.fitness = return_per_unit - (self.risk_aversion / 2) * variance_per_unit
 
     def fitness_with_sharpe_ratio(self, return_per_unit, variance_per_unit):
-        self.fitness = (np.sqrt(return_per_unit) / variance_per_unit)
+        std = np.sqrt(variance_per_unit)
+        if std <= 1e-12:
+            self.fitness = -np.inf
+        else:
+            self.fitness = (return_per_unit - self.risk_free_rate) / std
 
     def adjust_shares_to_budget(self):
-        total_value = self.calculate_total_investment()
-        if total_value == 0:
+        prices = np.array([stock.price for stock in self.stocks])
+        positions = prices * self.shares
+
+        if not self.is_short_available:
+            base = float(np.sum(np.maximum(positions, 0.0)))
+        else:
+            base = float(np.sum(np.abs(positions)))
+
+        if base <= 0:
             return
-        scaling_factor = self.budget / total_value
-        self.shares *= scaling_factor
+
+        scale = self.budget / base
+        self.shares *= scale
+
+        # compute again
         self.total_investment = self.calculate_total_investment()
+        self.expected_return = self.calculate_expected_return()
+        self.variance = self.calculate_variance()
+        self.calculate_fitness()
 
     def __add__(self, other):
         if(not self.crossover_function or self.crossover_function == "simulated binary crossover"):
@@ -141,13 +190,18 @@ class Portfolio:
     def arithmetic_crossover(self, other):
         r = np.random.rand()
         child_shares = r * self.shares + (1 - r) * other.shares
-        if(not self.is_short_available): 
+        if not self.is_short_available:
             child_shares = np.maximum(child_shares, 0)
-        child_portfolio = Portfolio(child_shares, self.stocks, self.cov_matrix, self.fitness_function, self.crossover_function, self.mutation_function, self.budget, self.risk_aversion)
-        child_portfolio.adjust_shares_to_budget()
-        child_portfolio.calculate_fitness()
-        return child_portfolio
 
+        child = Portfolio(
+            child_shares, self.stocks, self.cov_matrix,
+            self.is_short_available, self.fitness_function,
+            self.crossover_function, self.mutation_function,
+            self.budget, self.risk_aversion
+        )
+        child.adjust_shares_to_budget()
+        child.calculate_fitness()
+        return child
 
     #Mutation methods
     def gaussian_mutation(self):
@@ -190,10 +244,15 @@ class Portfolio:
         mutated_shares = self.shares.copy()
         for i in range(len(mutated_shares)):
             if np.random.rand() < Portfolio.mutation_rate:
-                mutated_shares[i] = np.random.uniform(self.shares[i] - np.sqrt(self.shares[i]), self.shares[i] + np.sqrt(self.shares[i]))
-        if(not self.is_short_available): 
+                span = np.sqrt(abs(self.shares[i]))  # <- abs()
+                mutated_shares[i] = np.random.uniform(self.shares[i] - span,
+                                                    self.shares[i] + span)
+        if not self.is_short_available:
             mutated_shares = np.maximum(mutated_shares, 0)
-        mutated_portfolio = Portfolio(mutated_shares, self.stocks, self.cov_matrix, self.is_short_available, self.fitness_function, self.crossover_function, self.mutation_function, self.budget, self.risk_aversion)
+        mutated_portfolio = Portfolio(mutated_shares, self.stocks, self.cov_matrix,
+                                    self.is_short_available, self.fitness_function,
+                                    self.crossover_function, self.mutation_function,
+                                    self.budget, self.risk_aversion)
         mutated_portfolio.adjust_shares_to_budget()
         mutated_portfolio.calculate_fitness()
         return mutated_portfolio
@@ -202,15 +261,14 @@ class Portfolio:
     #Utils methods
     def get_expected_return_percentage(self):
         if self.total_investment == 0:
-            return 0
-        return self.expected_return
+            return 0.0
+        return float(self.expected_return * 100.0)
 
     def get_volatility_percentage(self):
         if self.total_investment == 0:
-            return 0
-        variance_of_returns = self.variance / (self.total_investment ** 2)*100
-        return variance_of_returns
-
+            return 0.0
+        variance_of_returns = self.variance / (self.total_investment ** 2)
+        return float(np.sqrt(variance_of_returns) * 100.0)
 
     #Static methods
     @staticmethod

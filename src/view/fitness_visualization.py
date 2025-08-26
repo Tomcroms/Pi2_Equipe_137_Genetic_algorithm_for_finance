@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.animation as animation
 import numpy as np
+from src.model.portfolio import Portfolio
 
 class FitnessVisualizer:
     def __init__(self):
@@ -34,7 +35,7 @@ class FitnessVisualizer:
         plt.ion()
         plt.show()
 
-    def update(self, portfolio, generation):
+    def update(self, portfolio: Portfolio, generation):
         """
         Update the visualization with the best portfolio's metrics.
         

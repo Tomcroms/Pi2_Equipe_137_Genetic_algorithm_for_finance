@@ -22,20 +22,81 @@ class GeneticAlgorithm:
         self.in_stagnation_phase = False
         self.stagnation_counter = 0
         self.recovery_counter = 0
+        self.stagnation_extension_counter = 0
         self.best_fitness_history = []
         self.portfolio_visualizer = PortfolioVisualizer()
         self.fitness_visualizer = FitnessVisualizer()
 
     def initialize_population(self):
+        """
+        Create the initial population of portfolios.
+
+        Design choices:
+        - Long-only: sample weights from a Dirichlet so they are >= 0 and sum to 1,
+        then convert to shares that exactly match the cash budget.
+        - Long/short: build a signed weight vector where the gross exposure
+        (sum of absolute weights) equals 1, then scale so gross exposure equals
+        the cash budget. This keeps the notion of "budget" consistent for both modes.
+        - After building shares, we always call `adjust_shares_to_budget()` as a safety
+        net to guarantee the final exposure is exactly equal to the budget model.
+        """
         population = []
         prices = np.array([stock.price for stock in self.stocks])
+        n = len(self.stocks)
+
         for _ in range(self.population_size):
-            # Generate random number of shares within the budget
-            shares = np.random.rand(len(self.stocks)) * (self.budget / prices)
-            shares = np.floor(shares)  # Use whole shares
-            portfolio = Portfolio(shares, self.stocks, self.cov_matrix, self.is_short_available, self.fitness_function, self.crossover_function, self.mutation_function, self.budget, self.risk_aversion)
+            if self.is_short_available:
+                # ---- Long/short initialization ----
+                # We want signed weights whose L1 norm (sum of abs weights) is 1.
+                # A simple way: draw a long mix and a short mix from Dirichlet,
+                # then combine them with a chosen gross split (e.g., 50% long / 50% short).
+                long_mix = np.random.dirichlet(np.ones(n))   # non-negative, sums to 1
+                short_mix = np.random.dirichlet(np.ones(n))  # non-negative, sums to 1
+
+                gross_long_share = 0.5  # 50% gross long / 50% gross short to start
+                signed_w = gross_long_share * long_mix - (1.0 - gross_long_share) * short_mix
+
+                # Normalize so that sum(|w|) = 1 (pure gross exposure of 1 unit).
+                l1 = np.sum(np.abs(signed_w))
+                # Edge case: if numerically tiny (extremely unlikely), fall back to equal long-only
+                if l1 <= 0:
+                    signed_w = np.ones(n) / n
+                    l1 = 1.0
+                signed_w = signed_w / l1
+
+                # Turn weights into dollar allocations. With long/short, "budget" means
+                # target gross exposure (|long| + |short|) equals the cash budget.
+                dollar_alloc = signed_w * self.budget
+
+            else:
+                # ---- Long-only initialization ----
+                # Draw a random allocation on the simplex (>=0, sums to 1)
+                w = np.random.dirichlet(np.ones(n))
+
+                # Convert weights into dollar allocations so total invested equals budget.
+                dollar_alloc = w * self.budget
+
+            # Convert dollars to number of shares (real-valued; we keep it continuous here).
+            # If you later need integer shares, floor/round BEFORE calling adjust_shares_to_budget(),
+            # but be aware the rescale will make them continuous again.
+            shares = dollar_alloc / prices
+
+            # Build the Portfolio object
+            portfolio = Portfolio(
+                shares, self.stocks, self.cov_matrix,
+                self.is_short_available, self.fitness_function,
+                self.crossover_function, self.mutation_function,
+                self.budget, self.risk_aversion
+            )
+
+            # Safety: force the exposure to match the budget model exactly
+            # (long-only => sum of long dollars = budget ; long/short => gross = budget).
+            portfolio.adjust_shares_to_budget()
+
             population.append(portfolio)
+
         return population
+
     
     def compute_global_progression(self):
         """
@@ -162,13 +223,13 @@ class GeneticAlgorithm:
             # Increase exploration
             Portfolio.mutation_rate = min(1, Portfolio.mutation_rate * 1.1)
             Portfolio.sigma = min(0.5, Portfolio.sigma * 1.1)
-            Portfolio.eta = max(0.5, Portfolio.eta * 0.9)
+            Portfolio.eta = max(2, Portfolio.eta * 0.9)
             print(f"Stagnation: Increased mutation. eta={Portfolio.eta}, mutation_rate={Portfolio.mutation_rate}, sigma={Portfolio.sigma}")
         elif mode == 'recovered':
             # Decrease exploration slowly back to baseline
             Portfolio.mutation_rate = max(0.01, Portfolio.mutation_rate * 0.90)
             Portfolio.sigma = max(0.01, Portfolio.sigma * 0.90)
-            Portfolio.eta = min(1.0, Portfolio.eta * 1.1)
+            Portfolio.eta = min(25, Portfolio.eta * 1.1)
             print(f"Recovery: Reduced mutation. eta={Portfolio.eta}, mutation_rate={Portfolio.mutation_rate}, sigma={Portfolio.sigma}")
 
     def evolve(self, fitness_threshold):
@@ -176,6 +237,12 @@ class GeneticAlgorithm:
         best_fitness = -np.inf
 
         while best_fitness < fitness_threshold:
+            if generation > 50 and len(self.best_fitness_history) >= 20:
+                recent = self.best_fitness_history[-20:]
+                if max(recent) - min(recent) < 1e-6:
+                    print("Early stopping due to stagnation.")
+                    break
+                
             generation += 1
             new_population = []
                                                                                             # Elitism: retain the top 10% individuals
