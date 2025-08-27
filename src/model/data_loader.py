@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from model.stock import Stock
+from src.model.stock import Stock
 import os
 
 class DataLoader:

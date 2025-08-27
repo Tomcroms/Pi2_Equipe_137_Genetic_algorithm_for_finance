@@ -1,12 +1,12 @@
 import numpy as np
-from model.stock import Stock
-from model.portfolio import Portfolio
-from view.portfolio_visualizer import PortfolioVisualizer
-from view.fitness_visualization import FitnessVisualizer
+from src.model.stock import Stock
+from src.model.portfolio import Portfolio
+from src.view.portfolio_visualizer import PortfolioVisualizer
+from src.view.fitness_visualization import FitnessVisualizer
 import time
 
 class GeneticAlgorithm:
-    def __init__(self, stocks, cov_matrix, population_size=100, is_short_available=False, fitness_function=None, crossover_function=None, mutation_function=None, selection_method=None, risk_aversion=4, budget=10000000, max_generations=None):
+    def __init__(self, stocks, cov_matrix, population_size=100, is_short_available=False, fitness_function=None, crossover_function=None, mutation_function=None, selection_method=None, risk_aversion=4, budget=10000000, max_generations=None, enable_visuals=True, verbose=None, log_every=10):
         self.stocks = stocks
         self.cov_matrix = cov_matrix
         self.population_size = population_size  #number of portfolio generated at each step
@@ -24,8 +24,13 @@ class GeneticAlgorithm:
         self.recovery_counter = 0
         self.stagnation_extension_counter = 0
         self.best_fitness_history = []
-        self.portfolio_visualizer = PortfolioVisualizer()
-        self.fitness_visualizer = FitnessVisualizer()
+        self.enable_visuals = enable_visuals
+        if self.enable_visuals:
+            self.portfolio_visualizer = PortfolioVisualizer()
+            self.fitness_visualizer = FitnessVisualizer()
+        else:
+            self.portfolio_visualizer = None
+            self.fitness_visualizer = None
 
     def initialize_population(self):
         """
@@ -77,7 +82,7 @@ class GeneticAlgorithm:
                 dollar_alloc = w * self.budget
 
             # Convert dollars to number of shares (real-valued; we keep it continuous here).
-            # If you later need integer shares, floor/round BEFORE calling adjust_shares_to_budget(),
+            # If later need integer shares, floor/round BEFORE calling adjust_shares_to_budget(),
             # but be aware the rescale will make them continuous again.
             shares = dollar_alloc / prices
 
@@ -230,8 +235,10 @@ class GeneticAlgorithm:
             self.best_fitness_history.append(best_fitness)
             print(f"Generation {generation}: Best fitness = {best_fitness:.6f}")
 
-            self.portfolio_visualizer.update(self.population, best_portfolio)
-            self.fitness_visualizer.update(best_portfolio, generation)
+            if self.portfolio_visualizer:
+                self.portfolio_visualizer.update(self.population, best_portfolio)
+            if self.fitness_visualizer:
+                self.fitness_visualizer.update(best_portfolio, generation)
 
             #Check for stagnation
             status = self.detect_stagnation()
