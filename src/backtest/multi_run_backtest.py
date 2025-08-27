@@ -241,34 +241,77 @@ def parse_args():
     p.add_argument("--lam", type=float, default=0.94, help="EWMA lambda (used if cov includes ewma).")
     p.add_argument("--costs", nargs="+", type=int, default=[10], help="Costs in bps per side, e.g. 5 10 25.")
     p.add_argument("--seed", type=int, default=SEED)
+    # NEW: figure-only mode
+    p.add_argument("--fig-only", action="store_true",
+                   help="Skip running backtests; regenerate metrics and figures from an existing combined CSV.")
+    p.add_argument("--combined", type=str, default=str(RESULTS_DIR / "oos_results_all.csv"),
+                   help="Path to existing combined CSV (used with --fig-only).")
+    p.add_argument("--fig-cov", choices=["sample","ewma","auto"], default="auto",
+                   help="Which cov_method to use for figures (auto picks 'sample' if present).")
+    p.add_argument("--fig-cost", type=int, default=None,
+                   help="Which cost_bps to use for figures (default: smallest available).")
     return p.parse_args()
 
 def main():
     ensure_dirs()
     args = parse_args()
-    all_dfs = []
-    for covm in args.cov:
-        for c in args.costs:
-            df = run_one(cov_method=covm, lam=args.lam, cost_bps=c, seed=args.seed)
-            all_dfs.append(df)
-    big = pd.concat(all_dfs, ignore_index=True)
-    combined_path = RESULTS_DIR / "oos_results_all.csv"
-    big.to_csv(combined_path, index=False)
-    print(f"Saved combined: {combined_path}  ({len(big)} rows)")
 
-    # Metrics
+    if args.fig_only:
+        # --------- Reuse existing combined CSV ---------
+        combined_path = Path(args.combined)
+        if not combined_path.exists():
+            raise FileNotFoundError(f"Combined results not found: {combined_path}")
+        big = pd.read_csv(combined_path, parse_dates=["date"])
+        print(f"Loaded combined: {combined_path}  ({len(big)} rows)")
+    else:
+        # --------- Run batch backtests then combine ---------
+        all_dfs = []
+        for covm in args.cov:
+            for c in args.costs:
+                df = run_one(cov_method=covm, lam=args.lam, cost_bps=c, seed=args.seed)
+                all_dfs.append(df)
+        big = pd.concat(all_dfs, ignore_index=True)
+        combined_path = RESULTS_DIR / "oos_results_all.csv"
+        big.to_csv(combined_path, index=False)
+        print(f"Saved combined: {combined_path}  ({len(big)} rows)")
+
+    # --------- Metrics (re)build ---------
     table = annualized_metrics(big)
     table_path = RESULTS_DIR / "summary_metrics.csv"
     table.to_csv(table_path, index=False)
     print(f"Saved metrics: {table_path}")
 
-    # Figures (pour lisibilité: on trace celles de 'sample' au coût minimal)
-    df_sample = big[big["cov_method"]=="sample"]
-    if not df_sample.empty:
-        plot_equity(df_sample, FIG_DIR / "fig_equity_curves.pdf")
-        plot_boxplot(df_sample, FIG_DIR / "fig_boxplot_monthly_returns.pdf")
-        plot_rolling_sharpe(df_sample, FIG_DIR / "fig_rolling_sharpe.pdf")
-        print(f"Saved figures to {FIG_DIR}")
+    # --------- Choose subset for the 3 figures ---------
+    df_fig = big.copy()
+    # cov_method selection
+    if args.fig_cov == "auto":
+        if "sample" in df_fig["cov_method"].unique():
+            df_fig = df_fig[df_fig["cov_method"] == "sample"]
+        else:
+            # fallback to first available cov_method
+            first_cov = df_fig["cov_method"].iloc[0]
+            df_fig = df_fig[df_fig["cov_method"] == first_cov]
+    else:
+        df_fig = df_fig[df_fig["cov_method"] == args.fig_cov]
+
+    # cost_bps selection
+    if args.fig_cost is not None:
+        df_fig = df_fig[df_fig["cost_bps"] == args.fig_cost]
+    else:
+        # choose smallest available cost
+        if "cost_bps" in df_fig.columns and not df_fig["cost_bps"].empty:
+            min_cost = int(df_fig["cost_bps"].min())
+            df_fig = df_fig[df_fig["cost_bps"] == min_cost]
+
+    if df_fig.empty:
+        print("No rows match the selection for figures. Check --fig-cov / --fig-cost.")
+        return
+
+    # --------- Make the 3 figures -
+    plot_equity(df_fig, FIG_DIR / "fig_equity_curves.pdf")
+    plot_boxplot(df_fig, FIG_DIR / "fig_boxplot_monthly_returns.pdf")
+    plot_rolling_sharpe(df_fig, FIG_DIR / "fig_rolling_sharpe.pdf")
+    print(f"Saved figures to {FIG_DIR}")
 
 if __name__ == "__main__":
     main()
