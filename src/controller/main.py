@@ -6,11 +6,11 @@ project_root = os.path.abspath(os.path.join(current_dir, '..'))
 sys.path.insert(0, project_root)
 
 
-from model.genetic_algorithm import GeneticAlgorithm
-from model.data_loader import DataLoader
+from src.model.genetic_algorithm import GeneticAlgorithm
+from src.model.data_loader import DataLoader
 import time
 import tkinter as tk
-from view.gui import GAParameterView
+from src.view.gui import GAParameterView
 
 
 def main():
