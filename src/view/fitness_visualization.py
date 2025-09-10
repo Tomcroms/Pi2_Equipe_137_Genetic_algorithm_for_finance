@@ -1,5 +1,3 @@
-# fitness_visualization.py
-
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.animation as animation
@@ -8,26 +6,21 @@ from src.model.portfolio import Portfolio
 
 class FitnessVisualizer:
     def __init__(self):
-        # Initialize the figure and 3D axes
         self.fig = plt.figure(figsize=(10, 7))
         self.ax = self.fig.add_subplot(111, projection='3d')
         
-        # Lists to store data points
         self.expected_returns = []
         self.volatilities = []
         self.fitnesses = []
         self.generations = []
         
-        # Scatter plot
         self.scatter = self.ax.scatter([], [], [], c=[], cmap='viridis', marker='o')
         
-        # Labels
         self.ax.set_xlabel('Expected Return (%)')
         self.ax.set_ylabel('Volatility (%)')
         self.ax.set_zlabel('Fitness Function')
         self.ax.set_title('3D Fitness Progression Over Generations')
         
-        # Initialize color mapping for fitness
         self.cmap = plt.get_cmap('viridis')
         self.norm = plt.Normalize()
         
@@ -43,29 +36,23 @@ class FitnessVisualizer:
             portfolio (Portfolio): The best portfolio object of the current generation.
             generation (int): The current generation number.
         """
-        # Extract metrics
         exp_return = portfolio.get_expected_return_percentage()
         volatility = portfolio.get_volatility_percentage()
         fitness = portfolio.fitness
         
-        # Append to lists
         self.expected_returns.append(exp_return)
         self.volatilities.append(volatility)
         self.fitnesses.append(fitness)
         self.generations.append(generation)
         
-        # Update scatter data
         self.ax.scatter(exp_return, volatility, fitness, c=[fitness], cmap='viridis', norm=self.norm, marker='o')
         
-        # Update color normalization
         self.norm.autoscale(self.fitnesses)
         self.scatter.set_array(np.array(self.fitnesses))
         
-        # Adjust the view limits
         self.ax.relim()
         self.ax.autoscale_view()
         
-        # Redraw the figure
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
 

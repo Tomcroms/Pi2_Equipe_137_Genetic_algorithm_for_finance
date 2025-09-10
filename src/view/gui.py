@@ -89,7 +89,6 @@ class GAParameterView(tk.Toplevel):
         start_button.pack(pady=(20,10))
 
     def on_start(self):
-        # User pressed Start
         self.parameters_confirmed = True
         self.destroy()
 
