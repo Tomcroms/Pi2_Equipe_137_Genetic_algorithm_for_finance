@@ -1,104 +1,110 @@
-# Optimisation de Portefeuille avec Algorithme Génétique
+# Portfolio Optimization with Genetic Algorithm
 
-Ce projet implémente un algorithme génétique pour optimiser un portefeuille selon le modèle de Markowitz, en utilisant une fonction d'utilité quadratique. Différentes techniques d'optimisation ont été implémentées, telles que la sélection par tournoi avec élitisme, le Simulated Binary Crossover (SBX), et la mutation gaussienne avec normalisation. 
+This project implements a genetic algorithm to optimize a portfolio according to the Markowitz model, using a quadratic utility function. Various optimization techniques have been implemented, such as tournament selection with elitism, Simulated Binary Crossover (SBX), and Gaussian mutation with normalization.
 
-L'algorithme permet d'équilibrer le rendement espéré du portefeuille et le risque associé en fonction d'une aversion au risque donnée.
+The algorithm balances the expected return of the portfolio and the associated risk, depending on a given risk aversion.
 
-### Se référer à /docs/docs.md pour plus de détails sur les algorithmes génétiques
+### See /docs/docs.md for more details on genetic algorithms
 
-# Implémentation de l'algorithme génétique TEAM 137
+# Genetic Algorithm Implementation TEAM 137
 
-Voici les différentes méthodes que nous avons choisis pour les différentes étapes de notre algorithme génétique.
+Here are the different methods we chose for the various stages of our genetic algorithm.
 
-## 1. Initialisation de la population 
+## 1. Population Initialization
 
-Soit $n$ le nombre d'actions disponible dans le portefeuille
-Soit $p$ le prix de l'action
-Soit $B$ le budget définie
+Let $n$ be the number of assets available in the portfolio  
+Let $p$ be the price of the asset  
+Let $B$ be the defined budget  
 
-Pour chaque portefeuille de la population (chaque portefeuille étant une combinaison d'actions et de quantités), on génère un vecteur de $n$ valeurs aléatoires uniformes $si ∈ [0,1]$.
+For each portfolio in the population (each portfolio being a combination of assets and quantities), we generate a vector of $n$ random uniform values $s_i ∈ [0,1]$.
 
-Ensuite, pour toutes ces valeurs aléatoires 
+Then, for each of these random values:
 
-$si = B/pi$ --> Ces valeurs sont multipliées par la limite maximale de parts pouvant être achetées pour chaque action i dans la limite du budget. 
+$s_i = B/p_i$ → These values are multiplied by the maximum number of shares that can be purchased for each asset $i$, within the budget limit.  
 
-Les valeurs sont ensuite arrondies vers le bas (fonction plancher) pour garantir que le nombre de parts achetées est un nombre entier.
+Values are then rounded down (floor function) to ensure that the number of shares purchased is an integer.  
 
-A l'initialisation, le budget du portefeuille peut donc dépasser le budget total, cependant ce n'est pas grave car la fonction objective pénalise le dépassement de budget. Ainsi, au fur et à mesure le budget va converger vers le budget souhaité. 
-Cela permet de garder un portefeuille initiale le plus aléatoire possible.
+At initialization, the portfolio budget may exceed the total budget. However, this is not an issue, since the objective function penalizes budget overruns. Over time, the budget converges to the desired level.  
+This ensures the initial population of portfolios remains as random as possible.
 
-## 2. Fonction fitness
-Une fois la population de portefeuilles générée on peut calculer pour chacun d'entre eux leurs fonctions fitness.
-La fonction fitness des portefeuilles est calculée comme cela :
+## 2. Fitness Function
 
-![Formule fitness](img/fitness_formula.png)
+Once the portfolio population is generated, we can compute their fitness functions.  
+The portfolio fitness function is calculated as follows:
 
+\[
+S = \frac{E[R_p] - R_f}{\sigma_p}
+\]
 
-## 3. Fonction évolutive
+Where:  
+- $E[R_p]$ = Expected return of the portfolio  
+- $R_f$ = Risk-free rate  
+- $\sigma_p$ = Standard deviation of portfolio returns  
 
-La fonction évolutive est très simple :
+## 3. Evolutionary Function
 
-On boucle tant que la fonction fitness du meilleur portefeuille n'est pas supérieur à l'objectif final.
+The evolutionary function is straightforward:
 
-A chaque itération : 
+We loop until the fitness of the best portfolio exceeds the target objective.
 
-    - On sélectionne les portefeuilles pour la génération suivante
-    - On effectue les croisements sur les portefeuilles issus de la génération par tournoi. 
-    - On effectue la mutation sur les enfants de portefeuilles issus de la génération par tournoi. 
+At each iteration:
 
+- Select portfolios for the next generation  
+- Perform crossovers on the tournament-selected portfolios  
+- Apply mutation to the offspring portfolios  
 
-## 4. Sélection par élitisme et par tournoi
+## 4. Elitism and Tournament Selection
 
-La sélection des portefeuilles se fait en deux étapes : 
+Portfolio selection is done in two steps:
 
-1) Elitisme : consiste à garder les 10% meilleurs portefeuilles de la génération, sans y toucher. 
+1. **Elitism**: Keep the top 10% of portfolios in the generation unchanged.  
+2. **Tournament Selection**: For the remaining 90%, select parents via tournament. Randomly choose 3 portfolios from the current generation, and select the 2 best among them as parents.  
 
-2) Sélection par tournoi : pour les 90% restants, on sélectionne les parents par un tournoi. On prend au hasard 3 portefeuille de la génération actuelle et on sélectionne les 2 meilleurs parmis les 3 pour être des parents. 
+## 5. Crossover
 
-## 5. Croisement
-Après avoir sélectionnés les couples de parents, pour chaque couple on croise les deux portefeuilles comme ceci : 
+After selecting parent pairs, each pair is crossed as follows:
 
-ETA (𝜂) est l'indice de distribution du croisement (𝜂 élevé réduit la dispersion des enfants)
+ETA (𝜂) is the crossover distribution index (a high 𝜂 reduces child dispersion).  
 
-On boucle sur chaque actions : 
-On génère un nombre aléatoire U entre 0 et 1.
-La nouvelle part est calculée comme une moyenne pondérée des parts entre les 2 parents.
+For each asset:  
+Generate a random number $u ∈ [0,1]$.  
+The new share is computed as a weighted average of the shares from both parents.
 
-Formule part_enfant
-child_share=0.5*((1+β)*self.shares[i]+(1-β)*other.shares[i])
+Formula:  
+\[
+\text{child\_share} = 0.5 \cdot \big((1+β)\cdot \text{parent1\_share} + (1-β)\cdot \text{parent2\_share}\big)
+\]
 
-(1+β)*parent1_share -> pondère la partie du premier parent
-(1-β)*parent2_share -> pondère la partie du 2e parent
+- $(1+β)\cdot parent1\_share$ → weights the first parent’s share  
+- $(1-β)\cdot parent2\_share$ → weights the second parent’s share  
 
-Donc, si β proche 1 on se rapproche du 1er parent, β proche de 0 du 2e et β proche de 0.5 contribution équilibré des 2 parents.
+Thus:  
+- If $β \to 1$ → closer to parent 1  
+- If $β \to 0$ → closer to parent 2  
+- If $β \to 0.5$ → balanced contribution  
 
-La nouvelle part dépend donc du paramètre Beta calculé comme suit : 
-Si u<=0.5 :
-![Image équation](img/Beta_u_inf.png)
+The parameter $β$ is calculated as follows:  
 
-Explication : 
-On multiplie par 2u pour transformer l'intervalle [0, 0.5] en [0,1] -> normaliser u
-Exponentiation par 1/(𝜂+1) -> contrôler la courbe de distribution
+If $u \leq 0.5$ :  
+![Equation](img/Beta_u_inf.png)
 
-Si u>0.5 :
-![Image équation](img/Beta_u_sup.png)
-Cette fois-ci on normalise de [0.5, 1] en [0, 1] avec 2(1-u)
+If $u > 0.5$ :  
+![Equation](img/Beta_u_sup.png)
 
-Exemple d'une application numérique
-![Image exemple numérique](img/exemple_beta_u.png)
+Example numerical application:  
+![Example](img/exemple_beta_u.png)
 
-Dans cet exemple, les valeurs de 𝛽 u=0.25 u=0.75 sont des inverses approximatifs l'une de l'autre, illustrant la symétrie autour de la moyenne. 
-
+In this example, the values of β for $u=0.25$ and $u=0.75$ are approximate inverses of each other, illustrating symmetry around the mean.
 
 ## 6. Mutation
 
-On applique ensuite aux enfants formés la mutation comme ceci : 
-On définie la probabilité de mutation à 10%
-On définie sigma à 0.1 (écart type pour la perturbation gaussienne)
+Mutation is then applied to offspring as follows:  
 
-On boucle sur chaque part du portefeuille créé :
-    On applique la perturbation gaussienne si sélectionnée
-    ![Formule mutation](img/mutation_formula.png)
+- Mutation probability set to 10%  
+- Sigma set to 0.1 (standard deviation of Gaussian noise)  
 
-    On vérifie que les parts ne sont pas négatives
-    On conserve la proportion relative de chaque part en respectant le budget
+For each share in the created portfolio:  
+- Apply Gaussian perturbation if selected  
+  ![Mutation Formula](img/mutation_formula.png)  
+- Ensure no negative shares  
+- Keep relative share proportions within the budget

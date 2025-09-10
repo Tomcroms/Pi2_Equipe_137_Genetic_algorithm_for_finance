@@ -20,7 +20,6 @@ class GAParameterView(tk.Toplevel):
 
         self.create_widgets()
 
-        # Variable to signal that the user pressed Start
         self.parameters_confirmed = False
 
     def create_widgets(self):
